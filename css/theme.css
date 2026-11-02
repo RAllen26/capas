@@ -1,0 +1,115 @@
+/* =====================================================================
+   CAPAS THEME — the only file the brand process needs to touch.
+
+   Tier 1  BRAND PALETTE   raw colors, fonts. Change these first.
+   Tier 2  ROLES           what each color is FOR. Components only read
+                           roles, never raw palette values.
+   Tier 3  SHAPE & MOTION  borders, corners, shadows, tilt, speed.
+
+   Canvas code (artworks, AR, radar) reads the same tokens through
+   js/theme.js, so a change here reaches the map AND the camera view.
+
+   Try another theme: add ?theme=neutral to any URL (?theme=default to reset).
+   Add your own: copy the [data-theme="neutral"] block, rename it.
+   ===================================================================== */
+
+@import url("https://fonts.googleapis.com/css2?family=Rubik+Mono+One&family=Space+Mono:wght@400;700&family=Inter:wght@400;600;800&display=swap");
+
+:root {
+  /* ---- Tier 1: brand palette (v0 "punk xerox") ---- */
+  --brand-1: #e8ff2a;       /* acid */
+  --brand-2: #ff3ea5;       /* pink */
+  --brand-3: #3ee6ff;       /* cyan */
+  --brand-4: #ff7a1a;       /* orange */
+  --brand-dark: #0b0b0b;    /* ink */
+  --brand-light: #f2efe6;   /* paper */
+  --brand-night: #1a0b2e;   /* AR sky */
+
+  --font-display: "Rubik Mono One", "Arial Black", sans-serif;
+  --font-body: "Space Mono", ui-monospace, monospace;
+  --font-display-weight: 400;
+  --display-tracking: -0.02em;
+
+  /* ---- Tier 2: roles ---- */
+  --color-bg: var(--brand-dark);            /* page / map background */
+  --color-on-bg: var(--brand-light);        /* text on bg */
+  --color-surface: var(--brand-light);      /* sheets, dialogs, cards */
+  --color-on-surface: var(--brand-dark);
+  --color-field: #ffffff;                   /* form inputs */
+  --color-line: var(--brand-dark);          /* borders */
+  --color-primary: var(--brand-1);          /* main actions, logo, HUD */
+  --color-on-primary: var(--brand-dark);
+  --color-accent: var(--brand-2);           /* AR button, highlights */
+  --color-on-accent: var(--brand-dark);
+  --color-me: var(--brand-3);               /* "you are here" */
+  --color-sky: var(--brand-night);          /* AR without camera */
+  --color-select: #ffffff;                  /* selected piece outline in AR */
+
+  /* layers (dimensions) — also used by pins, chips, radar */
+  --layer-street: var(--brand-1);
+  --layer-dream: var(--brand-2);
+  --layer-memory: var(--brand-3);
+  --layer-signal: var(--brand-4);
+
+  /* map tiles are OSM; this filter gives them the theme's mood */
+  --map-bg: #111111;
+  --map-filter: invert(1) hue-rotate(180deg) grayscale(.75) brightness(.8) contrast(1.1);
+
+  /* ---- Tier 3: shape & motion ---- */
+  --border-w: 3px;
+  --radius: 0px;
+  --radius-chip: 0px;
+  --shadow-color: var(--color-line);
+  --shadow-sm: 3px 3px 0 var(--shadow-color);
+  --shadow-sm-hover: 4px 4px 0 var(--shadow-color);
+  --shadow-sm-active: 1px 1px 0 var(--shadow-color);
+  --shadow-md: 5px 5px 0 var(--shadow-color);
+  --shadow-panel: 8px 8px 0 var(--color-accent);
+  --shadow-dialog: 10px 10px 0 var(--color-primary);
+  --press: 2px;             /* how far buttons sink when pressed */
+  --tilt: -2deg;            /* logo tilt */
+  --pin-tilt: 16;           /* max random rotation of map pins, degrees */
+  --speed: .08s;
+}
+
+/* ---- Alternative theme: proves every role is swappable ---- */
+:root[data-theme="neutral"] {
+  --brand-1: #111111;
+  --brand-2: #2f6bff;
+  --brand-3: #00b894;
+  --brand-4: #e17055;
+  --brand-dark: #111111;
+  --brand-light: #ffffff;
+  --brand-night: #dfe6ee;
+
+  --font-display: "Inter", system-ui, sans-serif;
+  --font-body: "Inter", system-ui, sans-serif;
+  --font-display-weight: 800;
+  --display-tracking: -0.03em;
+
+  --color-bg: #f4f4f2;
+  --color-on-bg: #111111;
+  --color-on-primary: #ffffff;
+  --color-on-accent: #ffffff;
+  --color-line: #d9d9d6;
+  --color-select: #2f6bff;
+  --layer-street: #f5b700;
+  --layer-dream: #a55eea;
+
+  --map-bg: #e8e8e4;
+  --map-filter: grayscale(1) contrast(.95) brightness(1.05);
+
+  --border-w: 1px;
+  --radius: 12px;
+  --radius-chip: 999px;
+  --shadow-color: rgba(0, 0, 0, .12);
+  --shadow-sm: 0 2px 6px var(--shadow-color);
+  --shadow-sm-hover: 0 4px 12px var(--shadow-color);
+  --shadow-sm-active: 0 1px 2px var(--shadow-color);
+  --shadow-md: 0 6px 18px var(--shadow-color);
+  --shadow-panel: 0 12px 40px rgba(0, 0, 0, .18);
+  --shadow-dialog: 0 20px 60px rgba(0, 0, 0, .25);
+  --press: 0px;
+  --tilt: 0deg;
+  --pin-tilt: 0;
+}

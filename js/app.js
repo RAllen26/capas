@@ -22,7 +22,7 @@ L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
 
 function pinIcon(p) {
   const color = LAYERS[p.layer]?.color || '#fff';
-  const rot = (Art.rng(p.id)() - 0.5) * 16;
+  const rot = (Art.rng(p.id)() - 0.5) * Theme.num('--pin-tilt');
   return L.divIcon({
     className: '',
     html: `<div class="pin" style="--c:${color};--rot:${rot}deg"><img alt="" src="${Art.toDataURL(p, 108)}"></div>`,
@@ -97,8 +97,8 @@ function openSheet(id) {
   sheet.innerHTML = `
     <div class="sheet-art"><img alt="${esc(p.title)}" src="${Art.toDataURL(p, 512)}"><button class="x" data-close="sheet" aria-label="Close">×</button></div>
     <div class="sheet-body">
-      <span class="tag" style="--c:${layer.color}">${layer.label}</span><span class="tag" style="--c:var(--paper)">${anchor.label}</span>
-      ${p.local ? '<span class="tag" style="--c:var(--pink)">YOURS</span>' : ''}
+      <span class="tag" style="--c:${layer.color}">${layer.label}</span><span class="tag" style="--c:var(--color-surface)">${anchor.label}</span>
+      ${p.local ? '<span class="tag" style="--c:var(--color-accent)">YOURS</span>' : ''}
       <h2>${esc(p.title)}</h2>
       <div>${esc(p.artist)}</div>
       ${p.note ? `<p class="note">${esc(p.note)}</p>` : ''}
@@ -111,7 +111,7 @@ function openSheet(id) {
         <dt>License</dt><dd>${p.license}</dd>
       </dl>
       <div class="actions">
-        <a class="btn btn-ink" href="ar.html?piece=${encodeURIComponent(p.id)}">VIEW IN AR ▲</a>
+        <a class="btn btn-accent" href="ar.html?piece=${encodeURIComponent(p.id)}">VIEW IN AR ▲</a>
         <a class="btn" target="_blank" rel="noopener" href="https://www.openstreetmap.org/directions?to=${p.location.lat},${p.location.lng}">GO THERE</a>
         <button class="btn" data-qr="${p.id}">QR ANCHOR</button>
         ${p.local ? `<button class="btn" data-del="${p.id}">PAINT OVER</button>` : ''}
@@ -265,6 +265,6 @@ function esc(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;
 function slug(s) { return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 32) || 'piece'; }
 
 // Re-render art once the display font is in, so glyphs use it.
-document.fonts?.ready.then(() => { Art.clear(); renderMarkers(); });
+Art.ready.then(() => { Art.clear(); renderMarkers(); });
 renderLayers();
 renderMarkers();

@@ -2,6 +2,10 @@
 // gallery works with zero uploaded assets. Real media plugs in later.
 
 const Art = (() => {
+  // The art font is part of the artworks, not the brand theme, so it stays fixed.
+  const FONT = '"Rubik Mono One", "Arial Black", sans-serif';
+  const ready = document.fonts ? document.fonts.load('40px "Rubik Mono One"').catch(() => {}) : Promise.resolve();
+
   function hash(str) {
     let h = 2166136261;
     for (const c of String(str)) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); }
@@ -28,7 +32,7 @@ const Art = (() => {
     if (!lines.length) return;
     const longest = Math.max(...lines.map(l => l.length));
     const size = Math.min(maxSize, (w * 0.86) / (longest * 0.82), (h * 0.8) / (lines.length * 1.05));
-    ctx.font = `${size}px "Rubik Mono One", "Arial Black", sans-serif`;
+    ctx.font = `${size}px ${FONT}`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillStyle = color;
@@ -119,5 +123,6 @@ const Art = (() => {
 
   const toDataURL = (piece, size) => toCanvas(piece, size).toDataURL();
 
-  return { draw, toCanvas, toDataURL, rng, hash, clear: () => cache.clear() };
+  // `ready` resolves once the art font is in; clear the cache then so pieces redraw with it.
+  return { draw, toCanvas, toDataURL, rng, hash, ready, clear: () => cache.clear() };
 })();

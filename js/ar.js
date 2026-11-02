@@ -180,26 +180,26 @@ function drawPiece(pl, x, y, size, t) {
   ctx.fillRect(x + size * 0.06, y + size * 0.06, size, size);
   ctx.drawImage(Art.toCanvas(p, 256), x, y, size, size);
   if (!pl.unlocked) {
-    ctx.fillStyle = 'rgba(11,11,11,.72)';
+    ctx.fillStyle = Theme.alpha('--color-bg', 0.72);
     ctx.fillRect(x, y, size, size);
     ctx.fillStyle = color;
-    ctx.font = `${Math.max(14, size * 0.28)}px "Rubik Mono One", sans-serif`;
+    ctx.font = `${Math.max(14, size * 0.28)}px ${Theme.css('--font-display')}`;
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillText('◌', x + size / 2, y + size / 2);
   }
   ctx.lineWidth = selected ? 5 : 3;
-  ctx.strokeStyle = selected ? '#ffffff' : color;
+  ctx.strokeStyle = selected ? Theme.css('--color-select') : color;
   if (selected) ctx.setLineDash([10, 6]), (ctx.lineDashOffset = -t / 40);
   ctx.strokeRect(x, y, size, size);
   ctx.setLineDash([]);
 
   // label
   const label = `${p.title.toUpperCase()} · ${pl.ghost ? 'GHOST' : Geo.fmt(pl.dist)}`;
-  ctx.font = '700 11px "Space Mono", monospace';
+  ctx.font = `700 11px ${Theme.css('--font-body')}`;
   const lw = Math.min(ctx.measureText(label).width + 12, Math.max(size, 140));
   ctx.fillStyle = color;
   ctx.fillRect(x, y + size + 6, lw, 20);
-  ctx.fillStyle = '#0b0b0b';
+  ctx.fillStyle = Theme.css('--brand-dark');
   ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
   ctx.fillText(label, x + 6, y + size + 16, lw - 12);
   ctx.restore();
@@ -208,11 +208,11 @@ function drawPiece(pl, x, y, size, t) {
 function drawVoid(W, H) {
   // No camera: a scrolling grid world so desktop still feels spatial.
   const horizon = H / 2 + (s.pitch / (V_FOV / 2)) * (H / 2);
-  ctx.fillStyle = '#0b0b0b'; ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = Theme.css('--color-bg'); ctx.fillRect(0, 0, W, H);
   const g = ctx.createLinearGradient(0, horizon - H * 0.5, 0, horizon);
-  g.addColorStop(0, '#0b0b0b'); g.addColorStop(1, '#1a0b2e');
+  g.addColorStop(0, Theme.css('--color-bg')); g.addColorStop(1, Theme.css('--color-sky'));
   ctx.fillStyle = g; ctx.fillRect(0, 0, W, horizon);
-  ctx.strokeStyle = 'rgba(232,255,42,.25)'; ctx.lineWidth = 1;
+  ctx.strokeStyle = Theme.alpha('--color-primary', 0.25); ctx.lineWidth = 1;
   for (let i = 1; i < 14; i++) {
     const y = horizon + (i * i) * 3;
     if (y > H) break;
@@ -223,21 +223,21 @@ function drawVoid(W, H) {
     const x0 = W / 2 + ((k - off) * step / (H_FOV / 2)) * (W / 2);
     ctx.beginPath(); ctx.moveTo(x0, horizon); ctx.lineTo(W / 2 + (x0 - W / 2) * 6, H * 2); ctx.stroke();
   }
-  ctx.strokeStyle = 'rgba(255,62,165,.6)';
+  ctx.strokeStyle = Theme.alpha('--color-accent', 0.6);
   ctx.beginPath(); ctx.moveTo(0, horizon); ctx.lineTo(W, horizon); ctx.stroke();
 }
 
 function drawTurnArrow(rel, W, H) {
   const left = rel < 0;
   ctx.save();
-  ctx.fillStyle = '#e8ff2a'; ctx.strokeStyle = '#0b0b0b'; ctx.lineWidth = 3;
+  ctx.fillStyle = Theme.css('--color-primary'); ctx.strokeStyle = Theme.css('--color-line'); ctx.lineWidth = 3;
   const x = left ? 24 : W - 24, y = H / 2;
   ctx.beginPath();
   ctx.moveTo(x, y);
   ctx.lineTo(x + (left ? 34 : -34), y - 26);
   ctx.lineTo(x + (left ? 34 : -34), y + 26);
   ctx.closePath(); ctx.fill(); ctx.stroke();
-  ctx.font = '700 12px "Space Mono", monospace';
+  ctx.font = `700 12px ${Theme.css('--font-body')}`;
   ctx.textAlign = left ? 'left' : 'right';
   ctx.fillText(`TURN ${Math.round(Math.abs(rel))}°`, x + (left ? 4 : -4), y + 44);
   ctx.restore();
@@ -246,11 +246,11 @@ function drawTurnArrow(rel, W, H) {
 function drawRadar() {
   const R = 80, c = R;
   rctx.clearRect(0, 0, 160, 160);
-  rctx.fillStyle = 'rgba(11,11,11,.75)';
+  rctx.fillStyle = Theme.alpha('--color-bg', 0.75);
   rctx.beginPath(); rctx.arc(c, c, R - 2, 0, Math.PI * 2); rctx.fill();
-  rctx.strokeStyle = '#e8ff2a'; rctx.lineWidth = 2; rctx.stroke();
+  rctx.strokeStyle = Theme.css('--color-primary'); rctx.lineWidth = 2; rctx.stroke();
   // field of view cone (always pointing up = where you look)
-  rctx.fillStyle = 'rgba(232,255,42,.18)';
+  rctx.fillStyle = Theme.alpha('--color-primary', 0.18);
   rctx.beginPath(); rctx.moveTo(c, c);
   rctx.arc(c, c, R - 4, -Math.PI / 2 - (H_FOV / 2) * Math.PI / 180, -Math.PI / 2 + (H_FOV / 2) * Math.PI / 180);
   rctx.closePath(); rctx.fill();
@@ -261,7 +261,7 @@ function drawRadar() {
     rctx.fillStyle = LAYERS[pl.p.layer].color;
     rctx.beginPath(); rctx.arc(c + Math.cos(a) * r, c + Math.sin(a) * r, pl.p.id === s.selected ? 6 : 4, 0, Math.PI * 2); rctx.fill();
   }
-  rctx.fillStyle = '#3ee6ff';
+  rctx.fillStyle = Theme.css('--color-me');
   rctx.beginPath(); rctx.arc(c, c, 4, 0, Math.PI * 2); rctx.fill();
 }
 
@@ -277,5 +277,5 @@ function updateHud() {
 
 function escapeHtml(str) { return String(str ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
 
-document.fonts?.ready.then(() => Art.clear());
+Art.ready.then(() => Art.clear());
 requestAnimationFrame(frame);

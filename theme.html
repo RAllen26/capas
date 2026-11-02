@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CAPAS — theme</title>
+  <script src="js/theme.js"></script>
+  <link rel="stylesheet" href="css/theme.css">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    body { overflow: auto; height: auto; }
+    main { max-width: 960px; margin: 0 auto; padding: 80px 16px 48px; }
+    section { margin: 36px 0; }
+    section > h2 { font-size: 18px; margin-bottom: 12px; color: var(--color-primary); }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+    .swatch { border: var(--border-w) solid var(--color-line); border-radius: var(--radius); overflow: hidden; background: var(--color-surface); color: var(--color-on-surface); }
+    .swatch div { height: 56px; }
+    .swatch p { margin: 0; padding: 6px 8px; font-size: 11px; line-height: 1.35; word-break: break-all; }
+    .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+    .type-display { font-family: var(--font-display); font-weight: var(--font-display-weight); letter-spacing: var(--display-tracking); font-size: clamp(32px, 7vw, 64px); line-height: 1; margin: 0; }
+    .demo-sheet { position: static; max-height: none; width: min(380px, 100%); }
+    .demo-sheet .sheet-art img { aspect-ratio: 1; }
+    .themes a { margin-right: 6px; }
+    .layers.static { position: static; justify-content: flex-start; padding: 0; }
+    code { font-size: 12px; }
+  </style>
+</head>
+<body>
+  <header class="bar">
+    <a class="logo" href="./"><span data-brand>CAPAS</span><span class="logo-mark">/</span></a>
+    <nav class="themes">
+      <a class="btn" href="?theme=default">DEFAULT</a>
+      <a class="btn" href="?theme=neutral">NEUTRAL</a>
+    </nav>
+  </header>
+
+  <main>
+    <p class="small">Live style guide. Everything here is drawn from <code>css/theme.css</code>. Active theme: <b id="active"></b></p>
+
+    <section><h2>Brand palette</h2><div class="grid" id="brand"></div></section>
+    <section><h2>Roles</h2><div class="grid" id="roles"></div></section>
+    <section><h2>Layers</h2><div class="grid" id="layers-sw"></div></section>
+
+    <section>
+      <h2>Type</h2>
+      <p class="type-display">The city is already a gallery.</p>
+      <p>Body text in the body font. Pieces are pinned to real coordinates and woken up by real anchors.</p>
+    </section>
+
+    <section>
+      <h2>Components</h2>
+      <div class="row">
+        <button class="btn">DEFAULT</button>
+        <button class="btn btn-primary">PRIMARY</button>
+        <button class="btn btn-accent">ACCENT</button>
+        <button class="btn on">ON</button>
+      </div>
+      <br>
+      <div class="layers static" id="chips"></div>
+      <br>
+      <aside class="sheet demo-sheet" id="demo"></aside>
+    </section>
+  </main>
+
+  <script src="js/data.js"></script>
+  <script src="js/art.js"></script>
+  <script>
+    const tokens = {
+      brand: ['--brand-1', '--brand-2', '--brand-3', '--brand-4', '--brand-dark', '--brand-light', '--brand-night'],
+      roles: ['--color-bg', '--color-on-bg', '--color-surface', '--color-on-surface', '--color-line', '--color-primary',
+              '--color-on-primary', '--color-accent', '--color-on-accent', '--color-me', '--color-sky', '--color-select'],
+      'layers-sw': Object.keys(LAYERS).map(k => '--layer-' + k),
+    };
+    for (const [id, list] of Object.entries(tokens)) {
+      document.getElementById(id).innerHTML = list.map(t =>
+        `<div class="swatch"><div style="background:var(${t})"></div><p><b>${t}</b><br>${Theme.css(t)}</p></div>`).join('');
+    }
+    document.getElementById('active').textContent = Theme.name;
+    document.getElementById('chips').innerHTML = Object.values(LAYERS).map((l, i) =>
+      `<span class="chip ${i === 3 ? 'off' : ''}" style="--c:${l.color}">${l.label}</span>`).join('');
+
+    function renderDemo() {
+      const p = SEED_PIECES[1], l = LAYERS[p.layer];
+      document.getElementById('demo').innerHTML = `
+        <div class="sheet-art"><img alt="" src="${Art.toDataURL(p, 400)}"></div>
+        <div class="sheet-body">
+          <span class="tag" style="--c:${l.color}">${l.label}</span><span class="tag">QR STICKER</span>
+          <h2>${p.title}</h2><div>${p.artist}</div>
+          <p class="note">${p.note}</p>
+        </div>`;
+    }
+    renderDemo();
+    Art.ready.then(() => { Art.clear(); renderDemo(); });
+  </script>
+</body>
+</html>

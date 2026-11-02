@@ -5,19 +5,20 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>CAPAS — open street gallery</title>
   <meta name="description" content="A geospatial, augmented-reality street art gallery. Open source. No landlords.">
+  <script src="js/theme.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik+Mono+One&family=Space+Mono:wght@400;700&display=swap">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+  <link rel="stylesheet" href="css/theme.css">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
   <header class="bar">
-    <a class="logo" href="./" aria-label="CAPAS home">CAPAS<span>/</span></a>
+    <a class="logo" href="./" aria-label="CAPAS home"><span data-brand>CAPAS</span><span class="logo-mark">/</span></a>
     <nav>
       <button class="btn" id="btn-list">LIST</button>
       <button class="btn" id="btn-locate" title="Find me">◎ ME</button>
-      <button class="btn btn-acid" id="btn-drop">+ DROP</button>
-      <a class="btn btn-ink" href="ar.html">AR ▲</a>
+      <button class="btn btn-primary" id="btn-drop">+ DROP</button>
+      <a class="btn btn-accent" href="ar.html">AR ▲</a>
       <button class="btn" id="btn-manifesto">?</button>
     </nav>
   </header>
@@ -66,7 +67,7 @@
       <div class="palettes" id="drop-palettes"></div>
       <menu>
         <button class="btn" value="cancel" formnovalidate>CANCEL</button>
-        <button class="btn btn-acid" value="ok">PASTE IT</button>
+        <button class="btn btn-primary" value="ok">PASTE IT</button>
       </menu>
     </form>
   </dialog>
@@ -77,7 +78,7 @@
       <div id="qr"></div>
       <h3 id="qr-title"></h3>
       <p class="small" id="qr-url"></p>
-      <menu><button class="btn" onclick="this.closest('dialog').close()">CLOSE</button><button class="btn btn-acid" onclick="window.print()">PRINT</button></menu>
+      <menu><button class="btn" onclick="this.closest('dialog').close()">CLOSE</button><button class="btn btn-primary" onclick="window.print()">PRINT</button></menu>
     </div>
   </dialog>
 
@@ -92,7 +93,7 @@
         <li><b>Nobody deletes the past.</b> Pieces can be painted over, never erased. History stays in the repo.</li>
         <li><b>Brands pay rent, not rules.</b> Institutions can sponsor layers and routes. They don't get to own the protocol.</li>
       </ol>
-      <menu><button class="btn btn-acid" onclick="this.closest('dialog').close()">GET OUT THERE</button></menu>
+      <menu><button class="btn btn-primary" onclick="this.closest('dialog').close()">GET OUT THERE</button></menu>
     </article>
   </dialog>
 

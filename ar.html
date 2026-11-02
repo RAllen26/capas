@@ -4,8 +4,9 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
   <title>CAPAS — AR</title>
+  <script src="js/theme.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik+Mono+One&family=Space+Mono:wght@400;700&display=swap">
+  <link rel="stylesheet" href="css/theme.css">
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/ar.css">
 </head>
@@ -14,7 +15,7 @@
   <canvas id="view"></canvas>
 
   <header class="bar">
-    <a class="logo" href="./">CAPAS<span>/</span>AR</a>
+    <a class="logo" href="./"><span data-brand>CAPAS</span><span class="logo-mark">/</span>AR</a>
     <nav><a class="btn" href="./">MAP</a></nav>
   </header>
 
@@ -30,11 +31,11 @@
 
   <section class="gate" id="gate">
     <div class="gate-box">
-      <p class="tag" style="--c:var(--acid)">LAYER ABOVE THE CITY</p>
+      <p class="tag" style="--c:var(--color-primary)">LAYER ABOVE THE CITY</p>
       <h1>OPEN YOUR EYES.</h1>
       <p id="gate-focus"></p>
       <p class="small">CAPAS needs your camera, location and motion sensors. Nothing leaves your phone.</p>
-      <button class="btn btn-acid big" id="start">ENTER THE LAYER</button>
+      <button class="btn btn-primary big" id="start">ENTER THE LAYER</button>
       <p class="small">On desktop: drag to look around.</p>
     </div>
   </section>

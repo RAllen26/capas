@@ -13,6 +13,9 @@ through your phone camera. Open source, local-first, punk.
 | `js/data.js` | Data model (layers, anchors, schema) + seed pieces in CDMX |
 | `js/art.js` | Procedural artworks, so the gallery runs with zero uploaded media |
 | `js/store.js` | Local-first storage + geo math. Swap this for a backend later |
+| `css/theme.css` + `js/theme.js` | **The whole visual identity**: palette, roles, fonts, borders, corners, shadows, map mood, brand name |
+| `theme.html` | Live style guide of every token; add `?theme=neutral` to any page to try the alternative theme |
+| `IDEAS.md` | Parking lot for ideas not yet on the roadmap |
 
 No build step, no framework, no accounts. Static files.
 
@@ -24,6 +27,13 @@ python3 -m http.server 8080
 
 Open http://localhost:8080. Camera, GPS and compass need **HTTPS on a phone**, so to test AR on your phone either
 deploy (GitHub Pages / Netlify / Cloudflare Pages, all free) or tunnel your local server (`cloudflared tunnel --url http://localhost:8080`).
+
+## Rebranding
+
+Everything visual lives in `css/theme.css`, in three tiers: brand palette → roles (what each color is for) → shape & motion.
+Components only read roles, so a new identity is mostly new values in Tier 1. The brand name is `BRAND` in `js/theme.js`.
+Artworks keep their own palettes and font on purpose: a rebrand never repaints artists' work.
+To compare looks, add a `[data-theme="name"]` block and open any page with `?theme=name`.
 
 ## Concepts
 

@@ -2,11 +2,14 @@
 // Every piece is plain JSON so the whole gallery can live in a git repo,
 // be forked, mirrored, or federated later. No lock-in.
 
+// Layer colors live in css/theme.css (--layer-<key>); `color` resolves the current theme's value.
+const defineLayer = (key, label, desc) => ({ label, desc, get color() { return Theme.css('--layer-' + key); } });
+
 const LAYERS = {
-  street: { label: 'STREET', color: '#e8ff2a', desc: 'Bound to a physical wall, corner or object. You have to be there.' },
-  dream:  { label: 'DREAM',  color: '#ff3ea5', desc: 'Speculative futures and impossible architecture over the real city.' },
-  memory: { label: 'MEMORY', color: '#3ee6ff', desc: 'Histories, ghosts and erased stories of the place, restored.' },
-  signal: { label: 'SIGNAL', color: '#ff7a1a', desc: 'Sound, data, live feeds. Pieces that change while you watch.' },
+  street: defineLayer('street', 'STREET', 'Bound to a physical wall, corner or object. You have to be there.'),
+  dream: defineLayer('dream',  'DREAM',  'Speculative futures and impossible architecture over the real city.'),
+  memory: defineLayer('memory', 'MEMORY', 'Histories, ghosts and erased stories of the place, restored.'),
+  signal: defineLayer('signal', 'SIGNAL', 'Sound, data, live feeds. Pieces that change while you watch.'),
 };
 
 const ANCHORS = {
@@ -18,6 +21,7 @@ const ANCHORS = {
 
 const STYLES = ['stencil', 'rings', 'glitch', 'signal'];
 
+// Artwork palettes belong to the pieces, not the brand: a rebrand must not repaint artists' work.
 const PALETTES = [
   ['#0b0b0b', '#e8ff2a', '#ff3ea5'],
   ['#f2efe6', '#0b0b0b', '#ff3a1a'],
