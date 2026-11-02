@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>CAPAS — open street gallery</title>
+  <meta name="description" content="A geospatial, augmented-reality street art gallery. Open source. No landlords.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik+Mono+One&family=Space+Mono:wght@400;700&display=swap">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="bar">
+    <a class="logo" href="./" aria-label="CAPAS home">CAPAS<span>/</span></a>
+    <nav>
+      <button class="btn" id="btn-list">LIST</button>
+      <button class="btn" id="btn-locate" title="Find me">◎ ME</button>
+      <button class="btn btn-acid" id="btn-drop">+ DROP</button>
+      <a class="btn btn-ink" href="ar.html">AR ▲</a>
+      <button class="btn" id="btn-manifesto">?</button>
+    </nav>
+  </header>
+
+  <main id="map" aria-label="Map of pieces"></main>
+
+  <div class="layers" id="layers" role="group" aria-label="Layers"></div>
+
+  <div class="hint" id="drop-hint" hidden>TAP THE MAP WHERE YOUR PIECE LIVES <button class="link" id="drop-cancel">cancel</button></div>
+
+  <aside class="drawer" id="list" aria-label="All pieces" hidden>
+    <div class="drawer-head"><h2>THE WALL</h2><button class="x" data-close="list">×</button></div>
+    <ul id="list-items"></ul>
+    <div class="drawer-foot">
+      <button class="btn" id="btn-export">EXPORT MY PIECES (.json)</button>
+      <p class="small">Pieces you drop live on this device until you push them to the open repo.</p>
+    </div>
+  </aside>
+
+  <aside class="sheet" id="sheet" aria-label="Piece" hidden></aside>
+
+  <dialog id="drop-dialog">
+    <form method="dialog" id="drop-form">
+      <h2>DROP A PIECE</h2>
+      <div class="drop-grid">
+        <div>
+          <canvas id="drop-preview" width="320" height="320"></canvas>
+          <button type="button" class="btn small-btn" id="drop-reroll">↻ REROLL</button>
+        </div>
+        <div class="fields">
+          <label>Title <input name="title" required maxlength="60" placeholder="Untitled wall"></label>
+          <label>Artist handle <input name="artist" required maxlength="30" placeholder="@you"></label>
+          <label>Glyph (text painted on it) <input name="glyph" maxlength="14" placeholder="AQUÍ"></label>
+          <label>Layer <select name="layer"></select></label>
+          <label>Style <select name="style"></select></label>
+          <label>Anchor <select name="anchor"></select></label>
+          <label>Activation radius (m) <input name="radius" type="number" min="10" max="500" value="50"></label>
+          <label>Statement <textarea name="note" rows="2" maxlength="200"></textarea></label>
+          <label>License
+            <select name="license">
+              <option>CC-BY-SA-4.0</option><option>CC-BY-4.0</option><option>CC0-1.0</option>
+            </select>
+          </label>
+        </div>
+      </div>
+      <div class="palettes" id="drop-palettes"></div>
+      <menu>
+        <button class="btn" value="cancel" formnovalidate>CANCEL</button>
+        <button class="btn btn-acid" value="ok">PASTE IT</button>
+      </menu>
+    </form>
+  </dialog>
+
+  <dialog id="qr-dialog">
+    <div class="qr-sheet">
+      <p class="tag">ANCHOR / PRINT &amp; PASTE</p>
+      <div id="qr"></div>
+      <h3 id="qr-title"></h3>
+      <p class="small" id="qr-url"></p>
+      <menu><button class="btn" onclick="this.closest('dialog').close()">CLOSE</button><button class="btn btn-acid" onclick="window.print()">PRINT</button></menu>
+    </div>
+  </dialog>
+
+  <dialog id="manifesto">
+    <article>
+      <h2>THE CITY IS<br>ALREADY A GALLERY.</h2>
+      <p>CAPAS is an open layer of art over the streets. Pieces are pinned to real coordinates and woken up by real anchors: a GPS radius, a sticker, a tag, a wall.</p>
+      <ol>
+        <li><b>No landlords.</b> Every piece is plain JSON under a free license. Fork the wall.</li>
+        <li><b>You have to be there.</b> Street pieces only open in place. Presence is the price of entry.</li>
+        <li><b>Many layers, one city.</b> STREET, DREAM, MEMORY, SIGNAL. Toggle realities.</li>
+        <li><b>Nobody deletes the past.</b> Pieces can be painted over, never erased. History stays in the repo.</li>
+        <li><b>Brands pay rent, not rules.</b> Institutions can sponsor layers and routes. They don't get to own the protocol.</li>
+      </ol>
+      <menu><button class="btn btn-acid" onclick="this.closest('dialog').close()">GET OUT THERE</button></menu>
+    </article>
+  </dialog>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/art.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

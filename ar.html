@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <title>CAPAS — AR</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik+Mono+One&family=Space+Mono:wght@400;700&display=swap">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/ar.css">
+</head>
+<body class="ar">
+  <video id="cam" playsinline muted autoplay></video>
+  <canvas id="view"></canvas>
+
+  <header class="bar">
+    <a class="logo" href="./">CAPAS<span>/</span>AR</a>
+    <nav><a class="btn" href="./">MAP</a></nav>
+  </header>
+
+  <div class="hud" id="hud">
+    <span id="hud-mode">—</span>
+    <span id="hud-heading">—</span>
+    <span id="hud-gps">—</span>
+  </div>
+
+  <div class="radar" id="radar"><canvas id="radar-c" width="160" height="160"></canvas></div>
+
+  <div class="card" id="card" hidden></div>
+
+  <section class="gate" id="gate">
+    <div class="gate-box">
+      <p class="tag" style="--c:var(--acid)">LAYER ABOVE THE CITY</p>
+      <h1>OPEN YOUR EYES.</h1>
+      <p id="gate-focus"></p>
+      <p class="small">CAPAS needs your camera, location and motion sensors. Nothing leaves your phone.</p>
+      <button class="btn btn-acid big" id="start">ENTER THE LAYER</button>
+      <p class="small">On desktop: drag to look around.</p>
+    </div>
+  </section>
+
+  <script src="js/data.js"></script>
+  <script src="js/art.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/ar.js"></script>
+</body>
+</html>
