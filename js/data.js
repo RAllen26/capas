@@ -137,4 +137,13 @@ const SEED_PIECES = [
       { type: 'text', body: 'Kiosk and plaza since 1872. Above them, a layer nobody built yet.' },
       { type: 'physical', body: 'No physical trace yet. This is a test: walk into the garden and look above the kiosk.' },
     ] },
+  { id: 'anillo-tlalpan', title: 'Anillo del kiosco', artist: '@capas', created: '2026-11-02', layer: 'memory',
+    location: { lat: 19.288894, lng: -99.166958, radius: 90 }, anchor: { type: 'gps' },
+    art: { style: 'signal', glyph: '1872', palette: PALETTES[0], seed: 1873 },
+    note: 'Field test. A torus 18 m across, floating around the kiosk, turning once every 24 s.', license: 'CC0-1.0',
+    supports: [
+      { type: 'model', src: 'assets/kiosk-ring.glb', caption: 'Ring 18 m wide, floating 4.5 m up around the kiosk.',
+        pose: { altitude: 4.5, heading: 0, scale: 1 } },
+      { type: 'text', body: 'CAPAS · TLALPAN · 1872. The plaza turns slowly around its oldest structure.' },
+    ] },
 ];
