@@ -27,7 +27,7 @@ let three = null;
 const status3d = msg => { const el = $('#hud-3d'); el.hidden = false; el.textContent = '3D · ' + msg; };
 if (pieces.some(modelOf)) {
   status3d('LOADING');
-  import('./three-layer.js?v=202611021848').then(m => {
+  import('./three-layer.js?v=202611021901').then(m => {
     three = m.createLayer($('#gl'));
     resize();
     const loads = pieces.filter(modelOf).map(loadModel);

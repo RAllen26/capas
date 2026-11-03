@@ -127,4 +127,14 @@ const SEED_PIECES = [
       { type: 'physical', body: 'Open wall with QR sticker #014. Chalk is left in a tin at the corner.' },
       { type: 'text', body: 'aquí me enamoré — L.\naquí vivía mi abuela antes del 85\nwe were here 2026\n(add yours)' },
     ] },
+  { id: 'corona-tlalpan', title: 'Corona sobre el kiosco', artist: '@capas', created: '2026-11-02', layer: 'dream',
+    location: { lat: 19.288894, lng: -99.166958, radius: 90 }, anchor: { type: 'gps' },
+    art: { style: 'rings', glyph: 'TLALPAN', palette: PALETTES[3], seed: 1872 },
+    note: 'Field test. A crown floating above the kiosk of the Plaza de la Constitución. Look up.', license: 'CC0-1.0',
+    supports: [
+      { type: 'model', src: 'assets/coyote-totem.glb', caption: 'About 8 m tall, hovering over the kiosk. Solid inside the plaza, a wireframe ghost from outside.',
+        pose: { altitude: 7, heading: 0, scale: 3 } },
+      { type: 'text', body: 'Kiosk and plaza since 1872. Above them, a layer nobody built yet.' },
+      { type: 'physical', body: 'No physical trace yet. This is a test: walk into the garden and look above the kiosk.' },
+    ] },
 ];
