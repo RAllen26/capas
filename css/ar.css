@@ -7,7 +7,7 @@ body.ar { background: var(--color-bg); touch-action: none; user-select: none; -w
   position: fixed; left: 16px; top: calc(70px + env(safe-area-inset-top)); z-index: 10;
   display: flex; flex-direction: column; gap: 4px; font-size: 11px; font-weight: 700;
 }
-.hud span {
+.hud span, .hud button {
   background: color-mix(in srgb, var(--color-bg) 75%, transparent); color: var(--color-primary);
   padding: 3px 7px; border: 1px solid var(--color-primary); border-radius: calc(var(--radius) / 2); align-self: flex-start;
 }
@@ -43,3 +43,10 @@ body.ar { background: var(--color-bg); touch-action: none; user-select: none; -w
 .card { max-height: 60vh; overflow-y: auto; flex-wrap: wrap; }
 .card > div { flex: 1; min-width: 0; }
 .card .supports { flex-basis: 100%; margin: 4px 0 0; }
+.hud button { font: inherit; cursor: pointer; text-align: left; }
+.hud [hidden] { display: none; }
+.pin-here {
+  position: fixed; z-index: 15; left: 50%; transform: translateX(-50%);
+  bottom: calc(16px + env(safe-area-inset-bottom)); white-space: nowrap;
+}
+.pin-here:hover, .pin-here:active { transform: translateX(-50%); }

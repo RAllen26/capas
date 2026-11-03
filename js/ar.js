@@ -24,16 +24,48 @@ const bg = $('#bg'), bctx = bg.getContext('2d');
 // If WebGL or the library is unavailable they stay flat images, like the rest.
 const modelOf = p => Media.list(p).find(x => x.type === 'model');
 let three = null;
+const status3d = msg => { const el = $('#hud-3d'); el.hidden = false; el.textContent = '3D · ' + msg; };
 if (pieces.some(modelOf)) {
-  import('./three-layer.js').then(m => {
+  status3d('LOADING');
+  import('./three-layer.js?v=202611021848').then(m => {
     three = m.createLayer($('#gl'));
     resize();
-    pieces.forEach(p => {
-      const md = modelOf(p);
-      if (md) Media.url(md.src).then(u => u && three.add(p.id, u, md.pose)).catch(() => {});
+    const loads = pieces.filter(modelOf).map(loadModel);
+    Promise.allSettled(loads).then(r => {
+      const bad = r.filter(x => x.status === 'rejected').length;
+      status3d(bad ? `${r.length - bad}/${r.length} MODELS READY` : 'READY');
     });
-  }).catch(() => {});
+  }).catch(e => status3d('OFF · ' + String(e?.message || e).slice(0, 60).toUpperCase()));
 }
+
+function loadModel(p) {
+  const md = modelOf(p);
+  return Media.url(md.src).then(u => three.add(p.id, u, md.pose));
+}
+
+$('#hud-mode').addEventListener('click', () => { s.forceGhost = !s.forceGhost; place(); });
+
+// Test tool: pin a copy of the sample totem 8 m in front of where you stand, saved on this device.
+$('#pin-here').addEventListener('click', () => {
+  if (!s.me) { status3d('WAITING FOR GPS — TRY AGAIN IN A MOMENT'); return; }
+  const coyote = SEED_PIECES.find(x => x.id === 'coyote-digital');
+  const p = {
+    ...coyote,
+    id: 'test-totem-' + Date.now().toString(36),
+    title: 'Test totem', artist: '@you', created: new Date().toISOString().slice(0, 10),
+    location: { ...Geo.offset(s.me, s.heading, 8), radius: 30 },
+    anchor: { type: 'gps' },
+    note: 'A test piece pinned where you stood. Paint it over from the map when done.',
+    supports: coyote.supports.filter(x => x.type === 'model'),
+    license: 'CC0-1.0',
+  };
+  Store.add(p);
+  pieces.push(p);
+  s.forceGhost = false;
+  s.selected = p.id;
+  if (three) loadModel(p).then(() => status3d('TEST TOTEM PINNED 8 M AHEAD')).catch(() => status3d('COULD NOT LOAD THE MODEL'));
+  place();
+});
 
 const s = {
   heading: 0, pitch: 0, targetHeading: 0, targetPitch: 0,
@@ -88,14 +120,22 @@ function onOrient(e) {
 // ---------- placement: where each piece lives relative to you ----------
 function place() {
   const nearest = s.me ? Math.min(...pieces.map(p => Geo.distance(s.me, p.location))) : Infinity;
-  s.mode = nearest <= RANGE ? 'live' : 'ghost';
+  s.canLive = nearest <= RANGE;
+  s.mode = s.canLive && !s.forceGhost ? 'live' : 'ghost';
 
   if (s.mode === 'live') {
+    s.layout = 'live';
     s.placements = pieces.map(p => {
       const dist = Geo.distance(s.me, p.location);
+      if (p.id === focusId && dist > RANGE) {
+        // The piece you opened is far away: project it ahead of you instead of dropping it.
+        s.focusBearing ??= s.heading;
+        return { p, ghost: true, unlocked: true, bearing: s.focusBearing, dist: 9, far: dist };
+      }
       return { p, dist, bearing: Geo.bearing(s.me, p.location), unlocked: dist <= p.location.radius || p.id === focusId };
-    }).filter(x => x.dist <= RANGE);
-  } else if (!s.placements.length || s.placements[0].ghost !== true) {
+    }).filter(x => x.ghost || x.dist <= RANGE);
+  } else if (s.layout !== 'ghost') {
+    s.layout = 'ghost';
     // ghost ring: spread pieces around you, focused piece straight ahead
     const others = pieces.filter(p => p !== focus);
     s.placements = others.map((p, i) => ({
@@ -139,7 +179,7 @@ function showCard(pl) {
     <div>
       <span class="tag" style="--c:${layer.color}">${layer.label}</span>
       <h2>${escapeHtml(p.title)}</h2>
-      <p>${escapeHtml(p.artist)} · ${pl.ghost ? 'ghost projection' : Geo.fmt(pl.dist)}</p>
+      <p>${escapeHtml(p.artist)} · ${pl.ghost ? (pl.far ? `ghost projection, really ${Geo.fmt(pl.far)} away` : 'ghost projection') : Geo.fmt(pl.dist)}</p>
       <p>${pl.unlocked ? escapeHtml(p.note) : `LOCKED. Walk inside its ${p.location.radius} m radius or scan its ${ANCHORS[p.anchor.type].label}.`}</p>
       <div class="support-chips">${Media.chips(p)}</div>
     </div>
@@ -321,8 +361,8 @@ const DIRS = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
 function updateHud() {
   const near = s.placements.filter(p => p.unlocked).length;
   $('#hud-mode').textContent = s.mode === 'live'
-    ? `LIVE · ${s.placements.length} NEAR · ${near} OPEN`
-    : 'GHOST MODE · PROJECTED AROUND YOU';
+    ? `LIVE · ${s.placements.length} NEAR · ${near} OPEN · TAP FOR GHOST`
+    : `GHOST · PROJECTED AROUND YOU${s.canLive ? ' · TAP FOR LIVE' : ''}`;
   $('#hud-heading').textContent = `${DIRS[Math.round(s.heading / 45) % 8]} ${Math.round(s.heading)}° ${s.sensors ? '' : '· DRAG TO LOOK'}`;
   $('#hud-gps').textContent = s.me ? `GPS ±${Math.round(s.accuracy)} m` : 'NO GPS';
 }

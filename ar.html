@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
   <title>CAPAS — AR</title>
-  <script src="js/theme.js"></script>
+  <script src="js/theme.js?v=202611021848"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <script type="importmap">
     { "imports": {
@@ -12,9 +12,9 @@
       "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
     } }
   </script>
-  <link rel="stylesheet" href="css/theme.css">
-  <link rel="stylesheet" href="css/style.css">
-  <link rel="stylesheet" href="css/ar.css">
+  <link rel="stylesheet" href="css/theme.css?v=202611021848">
+  <link rel="stylesheet" href="css/style.css?v=202611021848">
+  <link rel="stylesheet" href="css/ar.css?v=202611021848">
 </head>
 <body class="ar">
   <video id="cam" playsinline muted autoplay></video>
@@ -28,13 +28,15 @@
   </header>
 
   <div class="hud" id="hud">
-    <span id="hud-mode">—</span>
+    <button id="hud-mode" type="button">—</button>
     <span id="hud-heading">—</span>
     <span id="hud-gps">—</span>
+    <span id="hud-3d" hidden></span>
   </div>
 
   <div class="radar" id="radar"><canvas id="radar-c" width="160" height="160"></canvas></div>
 
+  <button class="btn btn-primary pin-here" id="pin-here" type="button">◆ PIN TOTEM HERE</button>
   <div class="card" id="card" hidden></div>
 
   <section class="gate" id="gate">
@@ -48,10 +50,10 @@
     </div>
   </section>
 
-  <script src="js/data.js"></script>
-  <script src="js/art.js"></script>
-  <script src="js/store.js"></script>
-  <script src="js/media.js"></script>
-  <script src="js/ar.js"></script>
+  <script src="js/data.js?v=202611021848"></script>
+  <script src="js/art.js?v=202611021848"></script>
+  <script src="js/store.js?v=202611021848"></script>
+  <script src="js/media.js?v=202611021848"></script>
+  <script src="js/ar.js?v=202611021848"></script>
 </body>
 </html>

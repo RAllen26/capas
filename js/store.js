@@ -35,5 +35,13 @@ const Geo = {
               Math.sin(a.lat * toR) * Math.cos(b.lat * toR) * Math.cos((b.lng - a.lng) * toR);
     return (Math.atan2(y, x) / toR + 360) % 360;
   },
+  // The point `meters` away from `from` in direction `bearing` (degrees from north).
+  offset(from, bearing, meters) {
+    const toR = Math.PI / 180, d = meters / 6371000, b = bearing * toR;
+    const la = from.lat * toR, lo = from.lng * toR;
+    const la2 = Math.asin(Math.sin(la) * Math.cos(d) + Math.cos(la) * Math.sin(d) * Math.cos(b));
+    const lo2 = lo + Math.atan2(Math.sin(b) * Math.sin(d) * Math.cos(la), Math.cos(d) - Math.sin(la) * Math.sin(la2));
+    return { lat: +(la2 / toR).toFixed(7), lng: +(lo2 / toR).toFixed(7) };
+  },
   fmt(m) { return m < 1000 ? `${Math.round(m)} m` : `${(m / 1000).toFixed(1)} km`; },
 };
