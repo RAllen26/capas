@@ -28,7 +28,7 @@ const SUPPORTS = {
   image:    { label: 'IMAGE', icon: '◩', desc: 'A picture: photo, drawing, archive.' },
   video:    { label: 'VIDEO', icon: '▶', desc: 'Moving image, looped or played once.' },
   audio:    { label: 'SOUND', icon: '♪', desc: 'Sound: voice, field recording, music.' },
-  model:    { label: '3D',    icon: '◆', desc: 'A 3D object pinned in space (viewer coming next).' },
+  model:    { label: '3D',    icon: '◆', desc: 'A 3D object pinned in space: GLB with textures and animation.' },
 };
 
 const STYLES = ['stencil', 'rings', 'glitch', 'signal'];
@@ -57,7 +57,7 @@ Piece schema (v0):
   note:     string, artist statement
   supports: [ { type: key of SUPPORTS, body?, src?, caption?, onlyThere?, loop? } ]
             src: relative path, https URL, or idb:<key> for files kept on this device
-            model (next step): { type: 'model', src: '*.glb', pose: { altitude, heading, scale } }
+            model: { type: 'model', src: '*.glb', pose: { altitude (m above ground), heading (deg from north), scale } }
   license:  SPDX-ish string, default CC-BY-SA-4.0
 }
 `art` stays as the generated cover; the first image support replaces it when present.
@@ -104,7 +104,12 @@ const SEED_PIECES = [
   { id: 'coyote-digital', title: 'Coyote Digital', artist: '@nahual_404', created: '2026-09-30', layer: 'dream',
     location: { lat: 19.3500, lng: -99.1626, radius: 90 }, anchor: { type: 'gps' },
     art: { style: 'stencil', glyph: 'COYO TL', palette: PALETTES[3], seed: 23 },
-    note: 'The place of coyotes, re-wilded in the layer above.', license: 'CC-BY-SA-4.0' },
+    note: 'The place of coyotes, re-wilded in the layer above.', license: 'CC-BY-SA-4.0',
+    supports: [
+      { type: 'model', src: 'assets/coyote-totem.glb', caption: 'Glitch totem, 4 m tall, slowly turning.',
+        pose: { altitude: 0, heading: 0, scale: 1.6 } },
+      { type: 'text', body: 'Coyoacán: place of coyotes. They never left, they went up a layer.' },
+    ] },
   { id: 'alarma-sismica', title: 'Alarma Sísmica', artist: '@19S', created: '2026-09-19', layer: 'signal',
     location: { lat: 19.4150, lng: -99.1560, radius: 100 }, anchor: { type: 'gps' },
     art: { style: 'signal', glyph: '19.09', palette: PALETTES[1], seed: 1909 },

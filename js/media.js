@@ -86,15 +86,29 @@ const Media = (() => {
       else if (s.type === 'image') body = `<img data-i="${i}" alt="${esc(s.caption || p.title)}" loading="lazy">`;
       else if (s.type === 'video') body = `<video data-i="${i}" controls playsinline ${s.loop ? 'loop' : ''} preload="metadata"></video>`;
       else if (s.type === 'audio') body = `<audio data-i="${i}" controls ${s.loop ? 'loop' : ''} preload="none"></audio>`;
-      else if (s.type === 'model') body = `<p class="support-text">3D object: ${esc(s.src?.split('/').pop() || 'model')}. The 3D viewer arrives in the next step.</p>`;
+      else if (s.type === 'model') body = `<model-viewer data-i="${i}" alt="${esc(s.caption || p.title)}" camera-controls auto-rotate autoplay
+          ar ar-modes="webxr scene-viewer quick-look" ar-scale="fixed" shadow-intensity="1" exposure="1.1">
+          <button slot="ar-button" class="btn btn-primary ar-btn">◆ VIEW IN YOUR SPACE</button></model-viewer>`;
       const cap = !locked && s.caption ? `<p class="support-cap">${esc(s.caption)}</p>` : '';
       return `<figure class="support ${locked ? 'is-locked' : ''}" data-type="${s.type}">${head}${body}${cap}</figure>`;
     }).join('');
+    if (items.some(s => s.type === 'model')) loadModelViewer();
     for (const m of el.querySelectorAll('[data-i]')) {
       const u = await url(items[m.dataset.i].src);
-      if (u) m.src = u;
+      if (u) m.setAttribute('src', u); // attribute, so <model-viewer> sees it even if it upgrades later
       else m.replaceWith(Object.assign(document.createElement('p'), { className: 'support-locked', textContent: 'This file is stored on another device.' }));
     }
+  }
+
+  // <model-viewer>: 3D preview in cards, plus native AR (Quick Look on iPhone, Scene Viewer / WebXR on Android).
+  let mv = false;
+  function loadModelViewer() {
+    if (mv) return;
+    mv = true;
+    const sc = document.createElement('script');
+    sc.type = 'module';
+    sc.src = 'https://cdn.jsdelivr.net/npm/@google/model-viewer@3.5.0/dist/model-viewer.min.js';
+    document.head.append(sc);
   }
 
   return { save, url, remove, list, types, chips, icons, cover, render };

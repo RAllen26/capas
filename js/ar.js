@@ -18,6 +18,22 @@ const focus = pieces.find(p => p.id === focusId);
 
 const view = $('#view'), ctx = view.getContext('2d');
 const radar = $('#radar-c'), rctx = radar.getContext('2d');
+const bg = $('#bg'), bctx = bg.getContext('2d');
+
+// 3D: pieces with a model support load into a three.js layer under the labels.
+// If WebGL or the library is unavailable they stay flat images, like the rest.
+const modelOf = p => Media.list(p).find(x => x.type === 'model');
+let three = null;
+if (pieces.some(modelOf)) {
+  import('./three-layer.js').then(m => {
+    three = m.createLayer($('#gl'));
+    resize();
+    pieces.forEach(p => {
+      const md = modelOf(p);
+      if (md) Media.url(md.src).then(u => u && three.add(p.id, u, md.pose)).catch(() => {});
+    });
+  }).catch(() => {});
+}
 
 const s = {
   heading: 0, pitch: 0, targetHeading: 0, targetPitch: 0,
@@ -144,21 +160,30 @@ pieces.forEach(p => Media.cover(p).then(img => img && covers.set(p.id, img)));
 // ---------- render loop ----------
 function resize() {
   const dpr = Math.min(devicePixelRatio || 1, 2);
-  view.width = innerWidth * dpr; view.height = innerHeight * dpr;
+  for (const c of [view, bg]) { c.width = innerWidth * dpr; c.height = innerHeight * dpr; }
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  bctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  three?.resize(innerWidth, innerHeight);
 }
 addEventListener('resize', resize);
 resize();
 
 const wrap = d => ((d + 540) % 360) - 180;
+const rad = d => (d * Math.PI) / 180;
 
 function frame(t) {
   s.heading = (s.heading + wrap(s.targetHeading - s.heading) * 0.18 + 360) % 360;
   s.pitch += (s.targetPitch - s.pitch) * 0.18;
 
   const W = innerWidth, H = innerHeight;
+  // One pinhole camera for everything (2D pieces, grid, 3D): focal length from the horizontal FOV.
+  const f = (W / 2) / Math.tan(rad(H_FOV / 2));
+  const horizon = H / 2 + f * Math.tan(rad(s.pitch));
   ctx.clearRect(0, 0, W, H);
-  if (!s.camera) drawVoid(W, H);
+  bctx.clearRect(0, 0, W, H);
+  if (!s.camera) drawVoid(bctx, W, H, f, horizon);
+  three?.setView(s.heading, s.pitch, f, W, H);
+  three?.hideAll();
 
   s.hits = [];
   const sorted = [...s.placements].sort((a, b) => b.dist - a.dist);
@@ -170,12 +195,19 @@ function frame(t) {
       if (pl.p.id === s.selected) offscreenFocus = rel;
       return;
     }
+    if (three?.has(pl.p.id)) {
+      three.place(pl.p.id, pl.bearing, pl.dist, !pl.unlocked);
+      const r = three.project(pl.p.id, W, H);
+      if (r) { drawLabel(pl, r.x, r.y + r.h, r.w); s.hits.push({ pl, x: r.x, y: r.y, w: r.w, h: r.h + 30 }); }
+      return;
+    }
     const size = Math.max(40, Math.min(H * 0.45, (H * 3.5) / Math.max(pl.dist, 4)));
-    const x = W / 2 + (rel / (H_FOV / 2)) * (W / 2) - size / 2;
-    const y = H / 2 + (s.pitch / (V_FOV / 2)) * (H / 2) - size / 2 + Math.sin(t / 900 + i) * 5;
+    const x = W / 2 + f * Math.tan(rad(rel)) - size / 2;
+    const y = horizon - size / 2 + Math.sin(t / 900 + i) * 5;
     drawPiece(pl, x, y, size, t);
     s.hits.push({ pl, x, y, w: size, h: size + 30 });
   });
+  three?.render();
 
   if (offscreenFocus != null) drawTurnArrow(offscreenFocus, W, H);
   drawRadar();
@@ -204,38 +236,47 @@ function drawPiece(pl, x, y, size, t) {
   ctx.strokeRect(x, y, size, size);
   ctx.setLineDash([]);
 
-  // label
+  ctx.restore();
+  drawLabel(pl, x, y + size, size);
+}
+
+function drawLabel(pl, x, yTop, w) {
+  const { p } = pl, color = LAYERS[p.layer].color;
+  ctx.save();
   const label = `${p.title.toUpperCase()} · ${pl.ghost ? 'GHOST' : Geo.fmt(pl.dist)} ${Media.icons(p)}`;
   ctx.font = `700 11px ${Theme.css('--font-body')}`;
-  const lw = Math.min(ctx.measureText(label).width + 12, Math.max(size, 140));
+  const lw = Math.min(ctx.measureText(label).width + 12, Math.max(w, 140));
   ctx.fillStyle = color;
-  ctx.fillRect(x, y + size + 6, lw, 20);
+  ctx.fillRect(x, yTop + 6, lw, 20);
   ctx.fillStyle = Theme.css('--brand-dark');
   ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
-  ctx.fillText(label, x + 6, y + size + 16, lw - 12);
+  ctx.fillText(label, x + 6, yTop + 16, lw - 12);
   ctx.restore();
 }
 
-function drawVoid(W, H) {
-  // No camera: a scrolling grid world so desktop still feels spatial.
-  const horizon = H / 2 + (s.pitch / (V_FOV / 2)) * (H / 2);
-  ctx.fillStyle = Theme.css('--color-bg'); ctx.fillRect(0, 0, W, H);
-  const g = ctx.createLinearGradient(0, horizon - H * 0.5, 0, horizon);
+function drawVoid(c, W, H, f, horizon) {
+  // No camera: a grid world so desktop still feels spatial.
+  c.fillStyle = Theme.css('--color-bg'); c.fillRect(0, 0, W, H);
+  const g = c.createLinearGradient(0, horizon - H * 0.5, 0, horizon);
   g.addColorStop(0, Theme.css('--color-bg')); g.addColorStop(1, Theme.css('--color-sky'));
-  ctx.fillStyle = g; ctx.fillRect(0, 0, W, horizon);
-  ctx.strokeStyle = Theme.alpha('--color-primary', 0.25); ctx.lineWidth = 1;
-  for (let i = 1; i < 14; i++) {
-    const y = horizon + (i * i) * 3;
-    if (y > H) break;
-    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+  c.fillStyle = g; c.fillRect(0, 0, W, Math.max(0, horizon));
+  c.strokeStyle = Theme.alpha('--color-primary', 0.25); c.lineWidth = 1;
+  // ground lines every 2 m ahead, seen from eye height 1.6 m
+  for (let d = 2; d < 200; d *= 1.35) {
+    const y = H / 2 + f * Math.tan(rad(s.pitch) + Math.atan(1.6 / d));
+    if (y > H || y < 0) continue;
+    c.beginPath(); c.moveTo(0, y); c.lineTo(W, y); c.stroke();
   }
-  const step = 15, off = (s.heading % step) / step;
-  for (let k = -8; k <= 8; k++) {
-    const x0 = W / 2 + ((k - off) * step / (H_FOV / 2)) * (W / 2);
-    ctx.beginPath(); ctx.moveTo(x0, horizon); ctx.lineTo(W / 2 + (x0 - W / 2) * 6, H * 2); ctx.stroke();
+  // lines running away from you every 15°
+  const step = 15, off = s.heading % step;
+  for (let k = -5; k <= 5; k++) {
+    const a = k * step - off;
+    if (Math.abs(a) > 80) continue;
+    const x0 = W / 2 + f * Math.tan(rad(a));
+    c.beginPath(); c.moveTo(x0, horizon); c.lineTo(W / 2 + (x0 - W / 2) * 8, horizon + H * 4); c.stroke();
   }
-  ctx.strokeStyle = Theme.alpha('--color-accent', 0.6);
-  ctx.beginPath(); ctx.moveTo(0, horizon); ctx.lineTo(W, horizon); ctx.stroke();
+  c.strokeStyle = Theme.alpha('--color-accent', 0.6);
+  c.beginPath(); c.moveTo(0, horizon); c.lineTo(W, horizon); c.stroke();
 }
 
 function drawTurnArrow(rel, W, H) {

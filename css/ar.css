@@ -1,5 +1,5 @@
 body.ar { background: var(--color-bg); touch-action: none; user-select: none; -webkit-user-select: none; }
-#cam, #view { position: fixed; inset: 0; width: 100%; height: 100%; }
+#cam, #bg, #gl, #view { position: fixed; inset: 0; width: 100%; height: 100%; }
 #cam { object-fit: cover; }
 #view { cursor: grab; }
 

@@ -13,6 +13,8 @@ through your phone camera. Open source, local-first, punk.
 | `js/data.js` | Data model (layers, anchors, schema) + seed pieces in CDMX |
 | `js/art.js` | Procedural artworks, so the gallery runs with zero uploaded media |
 | `js/media.js` + `assets/` | Supports: renders each piece's media (on the street, text, image, video, sound) and keeps uploads on the device |
+| `js/three-layer.js` | 3D in AR: GLB models (textures, animation) placed at their real bearing and distance with three.js |
+| `tools/make_totem.py` | Generates the sample 3D piece `assets/coyote-totem.glb` |
 | `js/store.js` | Local-first storage + geo math. Swap this for a backend later |
 | `css/theme.css` + `js/theme.js` | **The whole visual identity**: palette, roles, fonts, borders, corners, shadows, map mood, brand name |
 | `theme.html` | Live style guide of every token; add `?theme=neutral` to any page to try the alternative theme |
