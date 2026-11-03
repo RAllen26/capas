@@ -42,8 +42,14 @@ function renderMarkers() {
       radius: p.location.radius, color: LAYERS[p.layer].color, weight: 1, dashArray: '4 4', fillOpacity: 0.06,
     }).addTo(map);
     state.markers.set(p.id, { remove: () => { m.remove(); circle.remove(); }, marker: m });
+    useCover(p, () => m.getElement()?.querySelector('.pin img'));
   }
   renderList();
+}
+
+// Generated art shows first; a piece's image support replaces it once loaded.
+function useCover(p, getImg) {
+  Media.cover(p).then(img => { const el = img && getImg(); if (el) el.src = img.src; });
 }
 
 // ---------- layer chips ----------
@@ -70,9 +76,11 @@ function renderList() {
     return `<li data-id="${p.id}">
       <img alt="" src="${Art.toDataURL(p, 88)}">
       <div><b>${esc(p.title)}</b>
-      <span class="meta">${esc(p.artist)} · ${LAYERS[p.layer].label}${d != null ? ' · ' + Geo.fmt(d) : ''}${p.local ? ' · YOURS' : ''}</span></div>
+      <span class="meta">${esc(p.artist)} · ${LAYERS[p.layer].label}${d != null ? ' · ' + Geo.fmt(d) : ''}${p.local ? ' · YOURS' : ''}</span>
+      <span class="meta">${Media.icons(p)}</span></div>
     </li>`;
   }).join('') || '<li>No pieces in these layers. Turn some on.</li>';
+  items.forEach(p => useCover(p, () => $(`#list-items li[data-id="${p.id}"] img`)));
 }
 $('#list-items').addEventListener('click', e => {
   const li = e.target.closest('li[data-id]');
@@ -101,7 +109,9 @@ function openSheet(id) {
       ${p.local ? '<span class="tag" style="--c:var(--color-accent)">YOURS</span>' : ''}
       <h2>${esc(p.title)}</h2>
       <div>${esc(p.artist)}</div>
+      <div class="support-chips">${Media.chips(p)}</div>
       ${p.note ? `<p class="note">${esc(p.note)}</p>` : ''}
+      <div class="supports" id="sheet-supports"></div>
       <dl class="kv">
         <dt>Anchor</dt><dd>${anchor.desc}${p.anchor.ref ? ` (${esc(p.anchor.ref)})` : ''}</dd>
         <dt>Radius</dt><dd>${p.location.radius} m</dd>
@@ -118,6 +128,9 @@ function openSheet(id) {
       </div>
     </div>`;
   sheet.hidden = false;
+  sheet.scrollTop = 0;
+  useCover(p, () => sheet.querySelector('.sheet-art img'));
+  Media.render($('#sheet-supports'), p, { unlocked: inside });
 }
 
 document.addEventListener('click', e => {
@@ -130,6 +143,7 @@ document.addEventListener('click', e => {
   if (qr) showQR(qr.dataset.qr);
   const del = e.target.closest('[data-del]');
   if (del && confirm('Paint over this piece on this device?')) {
+    Media.list(state.pieces.find(x => x.id === del.dataset.del) || {}).forEach(s => Media.remove(s.src));
     Store.remove(del.dataset.del);
     state.pieces = Store.all();
     $('#sheet').hidden = true;
@@ -194,6 +208,7 @@ map.on('click', e => {
     seed: Math.floor(Math.random() * 1e6),
   };
   form.reset();
+  $('#drop-supports').innerHTML = '';
   form.style.value = STYLES[Math.floor(Math.random() * STYLES.length)];
   renderPalettes();
   drawDraft();
@@ -236,9 +251,62 @@ $('#drop-palettes').addEventListener('click', e => {
 $('#drop-reroll').onclick = () => { state.draft.seed = Math.floor(Math.random() * 1e6); drawDraft(); };
 form.addEventListener('input', drawDraft);
 
-$('#drop-dialog').addEventListener('close', () => {
+// ---------- supports editor (one piece, many media) ----------
+const ACCEPT = { image: 'image/*', video: 'video/*', audio: 'audio/*' };
+$('#support-add').innerHTML = ['physical', 'text', 'image', 'video', 'audio'].map(t =>
+  `<button type="button" class="btn small-btn" data-add-support="${t}">+ ${SUPPORTS[t].icon} ${SUPPORTS[t].label}</button>`).join('');
+
+$('#support-add').addEventListener('click', e => {
+  const t = e.target.closest('[data-add-support]')?.dataset.addSupport;
+  if (!t) return;
+  const row = document.createElement('div');
+  row.className = 'srow';
+  row.dataset.type = t;
+  const isFile = !!ACCEPT[t];
+  row.innerHTML = `
+    <div class="srow-head"><b>${SUPPORTS[t].icon} ${SUPPORTS[t].label}</b><button type="button" class="link" data-remove-support>remove</button></div>
+    ${isFile ? `
+      <input type="file" accept="${ACCEPT[t]}" class="s-file" aria-label="${SUPPORTS[t].label} file">
+      <input type="url" class="s-url" placeholder="…or paste a link (https://…)" aria-label="${SUPPORTS[t].label} link">
+      <input class="s-cap" maxlength="120" placeholder="Caption (optional)" aria-label="Caption">`
+    : `<textarea class="s-body" rows="2" maxlength="600" placeholder="${t === 'physical' ? 'What is on the street? Stencil, sticker, object, where exactly…' : 'Poem, story, instructions…'}" aria-label="${SUPPORTS[t].label}"></textarea>`}
+    <div class="srow-opts">
+      <label><input type="checkbox" class="s-there"> Only opens on site</label>
+      ${t === 'video' || t === 'audio' ? '<label><input type="checkbox" class="s-loop"> Loop</label>' : ''}
+    </div>`;
+  $('#drop-supports').append(row);
+  row.querySelector('input, textarea').focus();
+});
+$('#drop-supports').addEventListener('click', e => { if (e.target.closest('[data-remove-support]')) e.target.closest('.srow').remove(); });
+
+async function readSupports() {
+  const out = [];
+  for (const row of $('#drop-supports').querySelectorAll('.srow')) {
+    const t = row.dataset.type, s = { type: t };
+    if (ACCEPT[t]) {
+      const file = row.querySelector('.s-file').files[0];
+      const link = row.querySelector('.s-url').value.trim();
+      if (file) s.src = await Media.save(file);
+      else if (/^https?:\/\//.test(link)) s.src = link;
+      else continue;
+      const cap = row.querySelector('.s-cap').value.trim();
+      if (cap) s.caption = cap;
+    } else {
+      s.body = row.querySelector('.s-body').value.trim();
+      if (!s.body) continue;
+    }
+    if (row.querySelector('.s-there')?.checked) s.onlyThere = true;
+    if (row.querySelector('.s-loop')?.checked) s.loop = true;
+    out.push(s);
+  }
+  return out;
+}
+
+$('#drop-dialog').addEventListener('close', async () => {
   if ($('#drop-dialog').returnValue !== 'ok') return;
   const p = draftPiece();
+  try { p.supports = await readSupports(); }
+  catch { p.supports = []; alert('Some files could not be saved on this device.'); }
   if (!Store.add(p)) alert('Could not save on this device (storage blocked). Export won\'t include it.');
   state.pieces = Store.all();
   state.layersOn.add(p.layer);

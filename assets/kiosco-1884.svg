@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600">
+<rect width="600" height="600" fill="#efe6cf"/>
+<g fill="none" stroke="#3b2f22" stroke-width="3" stroke-linejoin="round">
+<path d="M300 70 C 360 110 400 150 410 200 L190 200 C 200 150 240 110 300 70 Z"/>
+<line x1="300" y1="40" x2="300" y2="70"/><circle cx="300" cy="36" r="6"/>
+<path d="M170 200 H430 L445 222 H155 Z"/>
+<g><line x1="175" y1="222" x2="175" y2="430"/><line x1="235" y1="222" x2="235" y2="430"/><line x1="300" y1="222" x2="300" y2="430"/><line x1="365" y1="222" x2="365" y2="430"/><line x1="425" y1="222" x2="425" y2="430"/></g>
+<g><path d="M175 260 Q 205.0 222 235 260"/><path d="M235 260 Q 267.5 222 300 260"/><path d="M300 260 Q 332.5 222 365 260"/><path d="M365 260 Q 395.0 222 425 260"/></g>
+<path d="M140 430 H460 L480 470 H120 Z"/><path d="M120 470 H480 V490 H120 Z"/>
+<path d="M260 490 L250 530 M340 490 L350 530 M230 530 H370"/>
+</g>
+<g font-family="Georgia, serif" fill="#3b2f22" text-anchor="middle"><text x="300" y="565" font-size="22" letter-spacing="3">KIOSCO · 1884 → 1910</text></g>
+</svg>

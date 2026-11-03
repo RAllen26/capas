@@ -12,6 +12,7 @@ through your phone camera. Open source, local-first, punk.
 | `ar.html` + `js/ar.js` | Location-based AR in the browser: camera + GPS + compass, radar, locked/unlocked pieces, ghost mode, drag-to-look on desktop |
 | `js/data.js` | Data model (layers, anchors, schema) + seed pieces in CDMX |
 | `js/art.js` | Procedural artworks, so the gallery runs with zero uploaded media |
+| `js/media.js` + `assets/` | Supports: renders each piece's media (on the street, text, image, video, sound) and keeps uploads on the device |
 | `js/store.js` | Local-first storage + geo math. Swap this for a backend later |
 | `css/theme.css` + `js/theme.js` | **The whole visual identity**: palette, roles, fonts, borders, corners, shadows, map mood, brand name |
 | `theme.html` | Live style guide of every token; add `?theme=neutral` to any page to try the alternative theme |
@@ -48,6 +49,10 @@ To compare looks, add a `[data-theme="name"]` block and open any page with `?the
 - `qr`: a printed sticker on the wall points to `ar.html?piece=ID`. Works today (button *QR ANCHOR*).
 - `nfc`: same URL written to an NFC sticker; tapping the phone opens it. Works today with any NFC writer app.
 - `image`: the mural itself triggers the piece via image tracking. Roadmap (MindAR.js).
+
+**Supports (one piece, many media).** A piece lists the media it lives in: its physical trace on the street,
+text, image, video, sound, and soon 3D. Each medium shows what it can, and a support marked `onlyThere`
+opens only on site (inside the radius, or by scanning the anchor).
 
 **Ghost mode.** If you're far from every piece, AR projects the gallery around you so it's explorable from anywhere.
 Physically present = real placement + unlocking.

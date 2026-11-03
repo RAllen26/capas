@@ -40,3 +40,6 @@ body.ar { background: var(--color-bg); touch-action: none; user-select: none; -w
   color: var(--color-primary); text-shadow: 4px 4px 0 var(--color-accent);
 }
 .big { font-size: 16px; padding: 14px 20px; margin: 12px 0; }
+.card { max-height: 60vh; overflow-y: auto; flex-wrap: wrap; }
+.card > div { flex: 1; min-width: 0; }
+.card .supports { flex-basis: 100%; margin: 4px 0 0; }

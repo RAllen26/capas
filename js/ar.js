@@ -125,10 +125,21 @@ function showCard(pl) {
       <h2>${escapeHtml(p.title)}</h2>
       <p>${escapeHtml(p.artist)} · ${pl.ghost ? 'ghost projection' : Geo.fmt(pl.dist)}</p>
       <p>${pl.unlocked ? escapeHtml(p.note) : `LOCKED. Walk inside its ${p.location.radius} m radius or scan its ${ANCHORS[p.anchor.type].label}.`}</p>
+      <div class="support-chips">${Media.chips(p)}</div>
     </div>
-    <button class="x" aria-label="Close" onclick="this.parentElement.hidden=true">×</button>`;
+    <div class="supports" id="card-supports"></div>
+    <button class="x" aria-label="Close" onclick="this.parentElement.hidden=true;this.parentElement.querySelectorAll('audio,video').forEach(m=>m.pause())">×</button>`;
   card.hidden = false;
+  if (covers.has(p.id)) card.querySelector('img').src = covers.get(p.id).src;
+  // The tap that opened the card counts as a gesture, so on-site sound can start right away.
+  Media.render($('#card-supports'), p, { unlocked: pl.unlocked }).then(() => {
+    if (pl.unlocked) card.querySelector('audio')?.play().catch(() => {});
+  });
 }
+
+// Image supports replace the generated art floating in space once loaded.
+const covers = new Map();
+pieces.forEach(p => Media.cover(p).then(img => img && covers.set(p.id, img)));
 
 // ---------- render loop ----------
 function resize() {
@@ -178,7 +189,7 @@ function drawPiece(pl, x, y, size, t) {
   ctx.save();
   ctx.fillStyle = 'rgba(0,0,0,.45)';
   ctx.fillRect(x + size * 0.06, y + size * 0.06, size, size);
-  ctx.drawImage(Art.toCanvas(p, 256), x, y, size, size);
+  ctx.drawImage(covers.get(p.id) || Art.toCanvas(p, 256), x, y, size, size);
   if (!pl.unlocked) {
     ctx.fillStyle = Theme.alpha('--color-bg', 0.72);
     ctx.fillRect(x, y, size, size);
@@ -194,7 +205,7 @@ function drawPiece(pl, x, y, size, t) {
   ctx.setLineDash([]);
 
   // label
-  const label = `${p.title.toUpperCase()} · ${pl.ghost ? 'GHOST' : Geo.fmt(pl.dist)}`;
+  const label = `${p.title.toUpperCase()} · ${pl.ghost ? 'GHOST' : Geo.fmt(pl.dist)} ${Media.icons(p)}`;
   ctx.font = `700 11px ${Theme.css('--font-body')}`;
   const lw = Math.min(ctx.measureText(label).width + 12, Math.max(size, 140));
   ctx.fillStyle = color;
