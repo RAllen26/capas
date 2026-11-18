@@ -56,9 +56,10 @@ export function createLayer(canvas) {
   }
   function hideAll() { items.forEach(it => { it.group.visible = false; }); }
 
-  function setView(heading, pitch, focal, W, H) {
+  function setView(heading, pitch, focal, W, H, roll = 0) {
     camera.rotation.y = -rad(heading);
     camera.rotation.x = rad(pitch);
+    camera.rotation.z = rad(roll);
     camera.fov = (2 * Math.atan(H / 2 / focal) * 180) / Math.PI;
     camera.aspect = W / H;
     camera.updateProjectionMatrix();

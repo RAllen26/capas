@@ -77,6 +77,8 @@ opens only on site (inside the radius, or by scanning the anchor).
 
 **Ghost mode.** If you're far from every piece, AR projects the gallery around you so it's explorable from anywhere.
 Physically present = real placement + unlocking.
+**Steady view.** The gyroscope turns the view (smooth), the compass only corrects north slowly in the background,
+and small GPS wobbles are ignored, so pieces stay put like sculptures. If a piece sits beside its building, drag sideways to align the layer.
 A landmark piece (`seenFrom`, in meters) shows at its real place from farther away, like a giant ring over a building you can see from your window.
 
 ## Roadmap

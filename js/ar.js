@@ -18,7 +18,8 @@ const ARView = (() => {
 
   const s = {
     started: false, running: false,
-    heading: 0, pitch: 0, targetHeading: 0, targetPitch: 0,
+    heading: 0, pitch: 0, roll: 0, targetHeading: 0, targetPitch: 0, targetRoll: 0,
+    rel: null, compass: null, offset: null, offsetN: 0, relN: 0, nudge: 0, origin: null,
     sensors: false, camera: false,
     mode: 'ghost', canLive: false, forceGhost: false, layoutKey: '',
     focusId: null, focusBearing: null,
@@ -41,7 +42,7 @@ const ARView = (() => {
     if (threeLoading || !App.state.pieces.some(modelOf)) return;
     threeLoading = true;
     status3d('LOADING');
-    import('./three-layer.js?v=202611181738').then(m => {
+    import('./three-layer.js?v=202611181747').then(m => {
       three = m.createLayer($('#ar-gl'));
       resize();
       loadModels();
@@ -88,8 +89,8 @@ const ARView = (() => {
     if (typeof DeviceOrientationEvent !== 'undefined' && DeviceOrientationEvent.requestPermission) {
       try { await DeviceOrientationEvent.requestPermission(); } catch { /* denied: drag fallback */ }
     }
-    addEventListener('deviceorientationabsolute', onOrient);
-    addEventListener('deviceorientation', onOrient);
+    addEventListener('deviceorientationabsolute', onCompass);
+    addEventListener('deviceorientation', onRelative);
     App.locate().catch(() => {});
     run();
   };
@@ -120,19 +121,87 @@ const ARView = (() => {
     s.camera = false;
   }
 
-  function onOrient(e) {
-    let h = null;
-    if (typeof e.webkitCompassHeading === 'number') h = e.webkitCompassHeading;   // iOS
-    else if (e.absolute && e.alpha != null) h = 360 - e.alpha;                    // Android
-    if (h == null) return;
+  // ---------- orientation: gyro for steadiness, compass for direction ----------
+  // The gyroscope (relative orientation) is smooth but has no idea where north is; the compass knows north
+  // but jitters. So the view turns with the gyro, and the compass only nudges a north offset, slowly.
+  // That keeps a sculpture rigid when you turn, instead of swimming with every compass twitch.
+  const D = Math.PI / 180;
+  function pose(alpha, beta, gamma) {
+    // Device -> world (x east, y north, z up), W3C order Z-X'-Y''.
+    const a = alpha * D, b = beta * D, g = gamma * D;
+    const ca = Math.cos(a), sa = Math.sin(a), cb = Math.cos(b), sb = Math.sin(b), cg = Math.cos(g), sg = Math.sin(g);
+    const R = [
+      [ca * cg - sa * sb * sg, -sa * cb, ca * sg + sa * sb * cg],
+      [sa * cg + ca * sb * sg,  ca * cb, sa * sg - ca * sb * cg],
+      [-cb * sg,                sb,      cb * cg],
+    ];
+    const col = v => [0, 1, 2].map(i => R[i][0] * v[0] + R[i][1] * v[1] + R[i][2] * v[2]);
+    const th = (screen.orientation?.angle || 0) * D;
+    const fwd = col([0, 0, -1]);                                     // the back camera looks out of the back
+    const right = col([Math.cos(th), -Math.sin(th), 0]);             // screen right, after screen rotation
+    const heading = (Math.atan2(fwd[0], fwd[1]) / D + 360) % 360;
+    const pitch = Math.asin(Math.max(-1, Math.min(1, fwd[2]))) / D;
+    // Roll: how far screen-right tilts away from the level horizon.
+    const h = [fwd[1], -fwd[0], 0], hl = Math.hypot(h[0], h[1]) || 1;
+    const lh = [h[0] / hl, h[1] / hl, 0];
+    const up = [lh[1] * fwd[2] - 0, -lh[0] * fwd[2], lh[0] * fwd[1] - lh[1] * fwd[0]]; // lh × fwd
+    const roll = Math.atan2(right[0] * up[0] + right[1] * up[1] + right[2] * up[2], right[0] * lh[0] + right[1] * lh[1]) / D;
+    return { heading, pitch, roll };
+  }
+
+  function onRelative(e) {
+    if (e.alpha == null || e.beta == null) return;
+    if (e.absolute && e.type === 'deviceorientation' && typeof e.webkitCompassHeading !== 'number') {
+      // Some browsers only send absolute data on this event: treat it as the compass and as the view.
+      onCompass(e);
+    }
     s.sensors = true;
-    s.targetHeading = (h + (screen.orientation?.angle || 0) + 360) % 360;
-    if (e.beta != null) s.targetPitch = Math.max(-80, Math.min(80, e.beta - 90));
+    const p = pose(e.alpha, e.beta, e.gamma || 0);
+    s.rel = p;
+    if (typeof e.webkitCompassHeading === 'number') {                // iOS: compass rides along on this event
+      feedCompass((e.webkitCompassHeading + (screen.orientation?.angle || 0)) % 360, p.pitch);
+    }
+    if (s.offset == null && ++s.relN > 90) s.offset = 0;             // no compass on this phone: north is a guess
+    if (s.offset == null) return;
+    s.targetHeading = (p.heading + s.offset + s.nudge + 360) % 360;
+    s.targetPitch = p.pitch;
+    s.targetRoll = p.roll;
+  }
+
+  function onCompass(e) {
+    if (!e.absolute || e.alpha == null) return;
+    const p = pose(e.alpha, e.beta, e.gamma || 0);
+    feedCompass(p.heading, p.pitch);
+  }
+
+  function feedCompass(h, pitch) {
+    s.compass = h;
+    if (!s.rel || Math.abs(pitch) > 65) return;                      // pointing at sky or floor: compass is unreliable
+    const target = wrap(h - s.rel.heading);
+    if (s.offset == null || s.offsetN === 0) { s.offset = target; s.offsetN = 1; return; }
+    // Settle fast for the first second or so, then drift-correct very slowly.
+    const k = s.offsetN < 40 ? 1 / (s.offsetN + 1) : 0.004;
+    s.offset = (s.offset + wrap(target - s.offset) * k + 360) % 360;
+    s.offsetN++;
+  }
+
+  // GPS: hold your position still unless you really moved; small fixes are noise and would shake the scene.
+  function steadyOrigin(me, acc) {
+    if (!me) return null;
+    const o = s.origin;
+    const fresh = () => { s.originAcc = acc || 50; return (s.origin = { ...me }); };
+    if (!o) return fresh();
+    const d = Geo.distance(o, me);
+    if (d > 60 || (acc && acc < s.originAcc / 2)) return fresh();     // a jump, or a much better fix
+    s.originAcc = Math.min(s.originAcc, acc || s.originAcc);                        // a jump: you're somewhere else
+    if (d < Math.max(6, Math.min(acc || 20, 30) * 0.8)) return o;   // inside the noise: stay put
+    s.origin = { lat: o.lat + (me.lat - o.lat) * 0.35, lng: o.lng + (me.lng - o.lng) * 0.35 };
+    return s.origin;
   }
 
   // ---------- placement: where each piece lives relative to you ----------
   function place() {
-    const me = App.state.me;
+    const me = steadyOrigin(App.state.me, App.state.accuracy);
     const focus = s.focusId ? App.piece(s.focusId) : null;
     const pieces = App.visible();
     if (focus && !pieces.includes(focus)) pieces.unshift(focus); // the piece you opened shows even if filtered out
@@ -180,7 +249,12 @@ const ARView = (() => {
     const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
     drag.moved += Math.abs(dx) + Math.abs(dy);
     drag.x = e.clientX; drag.y = e.clientY;
-    if (s.sensors) return;
+    if (s.sensors) {
+      // Line it up: drag sideways to turn the whole layer until a piece sits on its building.
+      s.nudge = wrap(s.nudge - dx * (H_FOV / innerWidth));
+      s.targetHeading = (s.targetHeading - dx * (H_FOV / innerWidth) + 360) % 360;
+      return;
+    }
     s.targetHeading = (s.targetHeading - dx * (H_FOV / innerWidth) + 360) % 360;
     s.targetPitch = Math.max(-60, Math.min(60, s.targetPitch + dy * (V_FOV / innerHeight)));
   });
@@ -189,7 +263,14 @@ const ARView = (() => {
     drag = null;
   });
 
-  function tap(x, y) {
+  // Screen point -> the rolled frame the 2D canvas draws in.
+  function unroll(x, y, W = innerWidth, H = innerHeight) {
+    const a = -rad(s.roll), dx = x - W / 2, dy = y - H / 2;
+    return { x: W / 2 + dx * Math.cos(a) - dy * Math.sin(a), y: H / 2 + dx * Math.sin(a) + dy * Math.cos(a) };
+  }
+
+  function tap(sx, sy) {
+    const { x, y } = unroll(sx, sy);
     const hit = [...s.hits].reverse().find(h => x >= h.x && x <= h.x + h.w && y >= h.y && y <= h.y + h.h);
     if (hit) Card.open(hit.pl.p.id, { autoplay: true }); else Card.close();
   }
@@ -206,17 +287,28 @@ const ARView = (() => {
 
   function frame(t) {
     if (!s.running) return;
-    s.heading = (s.heading + wrap(s.targetHeading - s.heading) * 0.18 + 360) % 360;
-    s.pitch += (s.targetPitch - s.pitch) * 0.18;
+    // Gyro data is already smooth: follow it almost directly so the scene feels bolted to the street.
+    const k = s.sensors ? 0.6 : 0.18;
+    s.heading = (s.heading + wrap(s.targetHeading - s.heading) * k + 360) % 360;
+    s.pitch += (s.targetPitch - s.pitch) * k;
+    s.roll += (s.targetRoll - s.roll) * k;
 
     const W = innerWidth, H = innerHeight;
     // One pinhole camera for everything (2D pieces, grid, 3D): focal length from the horizontal FOV.
     const f = (W / 2) / Math.tan(rad(H_FOV / 2));
     const horizon = H / 2 + f * Math.tan(rad(s.pitch));
-    ctx.clearRect(0, 0, W, H);
-    bctx.clearRect(0, 0, W, H);
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    bctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, view.width, view.height);
+    bctx.clearRect(0, 0, bg.width, bg.height);
+    // Tilt the 2D layers with the phone's roll so the horizon stays level with the real one.
+    const dpr = view.width / W;
+    for (const c of [ctx, bctx]) {
+      c.setTransform(dpr, 0, 0, dpr, 0, 0);
+      c.translate(W / 2, H / 2); c.rotate(rad(s.roll)); c.translate(-W / 2, -H / 2);
+    }
     if (!s.camera) drawVoid(bctx, W, H, f, horizon);
-    three?.setView(s.heading, s.pitch, f, W, H);
+    three?.setView(s.heading, s.pitch, f, W, H, s.roll);
     three?.hideAll();
 
     s.hits = [];
@@ -231,8 +323,11 @@ const ARView = (() => {
       }
       if (three?.has(pl.p.id)) {
         three.place(pl.p.id, pl.bearing, pl.dist, !pl.unlocked && !pl.p.seenFrom);
-        const r = three.project(pl.p.id, W, H);
-        if (r) { drawLabel(pl, r.x, r.y + r.h, r.w); s.hits.push({ pl, x: r.x, y: r.y, w: r.w, h: r.h + 30 }); }
+        let r = three.project(pl.p.id, W, H);
+        if (r) {
+          const c = unroll(r.x + r.w / 2, r.y + r.h / 2, W, H);
+          r = { ...r, x: c.x - r.w / 2, y: c.y - r.h / 2 };
+          drawLabel(pl, r.x, r.y + r.h, r.w); s.hits.push({ pl, x: r.x, y: r.y, w: r.w, h: r.h + 30 }); }
         return;
       }
       const size = Math.max(40, Math.min(H * 0.45, (H * 3.5) / Math.max(pl.dist, 4)));
@@ -356,7 +451,7 @@ const ARView = (() => {
     $('#hud-mode').textContent = s.mode === 'live'
       ? `LIVE · ${s.placements.length} NEAR · ${open} OPEN · TAP FOR GHOST`
       : `GHOST · PROJECTED AROUND YOU${s.canLive ? ' · TAP FOR LIVE' : ''}`;
-    $('#hud-heading').textContent = `${DIRS[Math.round(s.heading / 45) % 8]} ${Math.round(s.heading)}° ${s.sensors ? '' : '· DRAG TO LOOK'}`;
+    $('#hud-heading').textContent = `${DIRS[Math.round(s.heading / 45) % 8]} ${Math.round(s.heading)}° ${s.sensors ? (s.nudge ? `· ALIGNED ${s.nudge > 0 ? '+' : ''}${Math.round(s.nudge)}°` : '· DRAG TO ALIGN') : '· DRAG TO LOOK'}`;
     $('#hud-gps').textContent = App.state.me ? `GPS ±${Math.round(App.state.accuracy)} m` : 'NO GPS';
   }
 
