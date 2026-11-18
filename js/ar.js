@@ -41,7 +41,7 @@ const ARView = (() => {
     if (threeLoading || !App.state.pieces.some(modelOf)) return;
     threeLoading = true;
     status3d('LOADING');
-    import('./three-layer.js?v=202611181341').then(m => {
+    import('./three-layer.js?v=202611181738').then(m => {
       three = m.createLayer($('#ar-gl'));
       resize();
       loadModels();
@@ -138,21 +138,22 @@ const ARView = (() => {
     if (focus && !pieces.includes(focus)) pieces.unshift(focus); // the piece you opened shows even if filtered out
     pieces.forEach(ensureCover);
 
-    const nearest = me && pieces.length ? Math.min(...pieces.map(p => Geo.distance(me, p.location))) : Infinity;
-    s.canLive = nearest <= RANGE;
+    // A landmark piece (seenFrom, meters) stays in the live view from farther away than RANGE.
+    const reach = p => Math.max(RANGE, p.seenFrom || 0);
+    s.canLive = !!me && pieces.some(p => Geo.distance(me, p.location) <= reach(p));
     s.mode = s.canLive && !s.forceGhost ? 'live' : 'ghost';
 
     if (s.mode === 'live') {
       s.layoutKey = '';
       s.placements = pieces.map(p => {
         const dist = Geo.distance(me, p.location);
-        if (p === focus && dist > RANGE) {
+        if (p === focus && dist > reach(p)) {
           // The piece you opened is far away: project it ahead of you instead of dropping it.
           s.focusBearing ??= s.heading;
           return { p, ghost: true, unlocked: true, bearing: s.focusBearing, dist: 9, far: dist };
         }
         return { p, dist, bearing: Geo.bearing(me, p.location), unlocked: App.isOpen(p) };
-      }).filter(x => x.ghost || x.dist <= RANGE);
+      }).filter(x => x.ghost || x.dist <= reach(x.p));
       return;
     }
 
@@ -229,7 +230,7 @@ const ARView = (() => {
         return;
       }
       if (three?.has(pl.p.id)) {
-        three.place(pl.p.id, pl.bearing, pl.dist, !pl.unlocked);
+        three.place(pl.p.id, pl.bearing, pl.dist, !pl.unlocked && !pl.p.seenFrom);
         const r = three.project(pl.p.id, W, H);
         if (r) { drawLabel(pl, r.x, r.y + r.h, r.w); s.hits.push({ pl, x: r.x, y: r.y, w: r.w, h: r.h + 30 }); }
         return;

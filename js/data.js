@@ -61,6 +61,7 @@ Piece schema (v0):
   created:  ISO date
   layer:    key of LAYERS
   location: { lat, lng, radius }   radius in meters = activation zone
+  seenFrom?: meters                a landmark: AR shows it solid from this far (default 2 km), caught or not
   anchor:   { type: key of ANCHORS, ref?: string }
   art:      { style: one of STYLES, glyph: short text, palette: [bg, fg, accent], seed }
   note:     string, artist statement
@@ -164,5 +165,14 @@ const SEED_PIECES = [
       { type: 'model', src: 'assets/stadium-ring.glb', caption: '180 m wide, 11 m thick, 75 m up. Look up and toward the stadium.',
         pose: { altitude: 75, heading: 0, scale: 10 } },
       { type: 'text', body: 'CAPAS · AZTECA · 1966. A halo for the stadium, seen from the neighbourhood around it.' },
+    ] },
+  { id: 'halo-torre', capa: 'project', title: 'Halo de la Torre', artist: '@capas', created: '2026-11-18', layer: 'signal',
+    location: { lat: 19.2971, lng: -99.190498, radius: 150 }, seenFrom: 5000, anchor: { type: 'gps' },
+    art: { style: 'rings', glyph: 'TORRE', palette: PALETTES[2], seed: 2026 },
+    note: 'Field test. A ring 72 m across floating 45 m up, just over the roof of a nine-storey building. A landmark: it shows from up to 5 km away, so you can look for it from a window.', license: 'CC0-1.0',
+    supports: [
+      { type: 'model', src: 'assets/tower-ring.glb', caption: '72 m wide, 4 m thick, 45 m up: about 15 m above the roof.',
+        pose: { altitude: 45, heading: 0, scale: 4 } },
+      { type: 'text', body: 'CAPAS · TORRE · 2026. A halo over a nine-storey building, visible across the neighbourhood.' },
     ] },
 ];
