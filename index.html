@@ -5,44 +5,99 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>CAPAS — open street gallery</title>
   <meta name="description" content="A geospatial, augmented-reality street art gallery. Open source. No landlords.">
-  <script src="js/theme.js?v=202611021905"></script>
+  <meta name="theme-color" content="#f1f1ee">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="assets/icon-192.png">
+  <link rel="apple-touch-icon" href="assets/icon-192.png">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <script src="js/theme.js?v=202611180853"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
+  <script type="importmap">
+    { "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+    } }
+  </script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-  <link rel="stylesheet" href="css/theme.css?v=202611021905">
-  <link rel="stylesheet" href="css/style.css?v=202611021905">
+  <link rel="stylesheet" href="css/theme.css?v=202611180853">
+  <link rel="stylesheet" href="css/style.css?v=202611180853">
+  <link rel="stylesheet" href="css/ar.css?v=202611180853">
 </head>
 <body>
   <header class="bar">
-    <a class="logo" href="./" aria-label="CAPAS home"><span data-brand>CAPAS</span><span class="logo-mark">/</span></a>
+    <a class="logo" href="#map" aria-label="CAPAS map"><span data-brand>CAPAS</span><span class="logo-mark">/</span></a>
     <nav>
-      <button class="btn" id="btn-list">LIST</button>
-      <button class="btn" id="btn-locate" title="Find me">◎ ME</button>
-      <button class="btn btn-primary" id="btn-drop">+ DROP</button>
-      <a class="btn btn-accent" href="ar.html">AR ▲</a>
-      <button class="btn" id="btn-manifesto">?</button>
+      <select class="btn" id="capa-filter" aria-label="Show which capa"></select>
+      <button class="btn" id="btn-info" aria-label="About CAPAS">?</button>
     </nav>
   </header>
 
-  <main id="map" aria-label="Map of pieces"></main>
+  <!-- MAP -->
+  <section class="view" id="view-map" hidden>
+    <main id="map" aria-label="Map of pieces"></main>
+    <div class="fabs">
+      <button class="btn" id="btn-locate" aria-label="Find me">◎</button>
+      <button class="btn" id="btn-list" aria-label="List of pieces">☰</button>
+    </div>
+    <div class="hint" id="drop-hint" hidden>
+      <span>TAP THE MAP WHERE YOUR PIECE LIVES</span>
+      <button class="link" id="drop-here">use where I stand</button>
+      <button class="link" id="drop-cancel">cancel</button>
+    </div>
+    <aside class="drawer" id="list" aria-label="All pieces" hidden>
+      <div class="drawer-head"><h2>THE WALL</h2><button class="x" id="list-close" aria-label="Close">×</button></div>
+      <ul id="list-items"></ul>
+    </aside>
+  </section>
+
+  <!-- AR -->
+  <section class="view" id="view-ar" hidden>
+    <video id="ar-cam" playsinline muted autoplay></video>
+    <canvas id="ar-bg"></canvas>
+    <canvas id="ar-gl"></canvas>
+    <canvas id="ar-canvas"></canvas>
+    <div class="hud" id="hud">
+      <button id="hud-mode" type="button">—</button>
+      <span id="hud-heading">—</span>
+      <span id="hud-gps">—</span>
+      <span id="hud-3d" hidden></span>
+    </div>
+    <div class="radar" id="radar"><canvas id="radar-c" width="160" height="160"></canvas></div>
+    <div class="gate" id="gate">
+      <div class="gate-box">
+        <p class="tag" style="--c:var(--color-primary)">LAYER ABOVE THE CITY</p>
+        <h1>OPEN YOUR EYES.</h1>
+        <p id="gate-focus"></p>
+        <p class="small">CAPAS needs your camera, location and motion sensors. Nothing leaves your phone.</p>
+        <button class="btn btn-primary big" id="ar-start">ENTER THE LAYER</button>
+        <p class="small">On desktop: drag to look around.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- COLLECTION -->
+  <section class="view" id="view-collection" hidden>
+    <div class="collection" id="collection"></div>
+  </section>
 
   <div class="layers" id="layers" role="group" aria-label="Layers"></div>
 
-  <div class="hint" id="drop-hint" hidden>TAP THE MAP WHERE YOUR PIECE LIVES <button class="link" id="drop-cancel">cancel</button></div>
-
-  <aside class="drawer" id="list" aria-label="All pieces" hidden>
-    <div class="drawer-head"><h2>THE WALL</h2><button class="x" data-close="list">×</button></div>
-    <ul id="list-items"></ul>
-    <div class="drawer-foot">
-      <button class="btn" id="btn-export">EXPORT MY PIECES (.json)</button>
-      <p class="small">Pieces you drop live on this device until you push them to the open repo.</p>
-    </div>
-  </aside>
+  <nav class="tabbar" aria-label="Sections">
+    <button class="tab" data-view="map"><i>▦</i>MAP</button>
+    <button class="tab" data-view="ar"><i>▲</i>AR</button>
+    <button class="tab" data-view="collection"><i>●<sup id="tab-count"></sup></i>COLLECTION</button>
+    <button class="tab tab-create" id="tab-create"><i>+</i>CREATE</button>
+  </nav>
 
   <aside class="sheet" id="sheet" aria-label="Piece" hidden></aside>
+  <div class="toast" id="toast" role="status" hidden></div>
 
   <dialog id="drop-dialog">
     <form method="dialog" id="drop-form">
-      <h2>DROP A PIECE</h2>
+      <h2>PASTE A PIECE</h2>
+      <p class="small">At <span id="drop-where"></span></p>
       <div class="drop-grid">
         <div>
           <canvas id="drop-preview" width="320" height="320"></canvas>
@@ -53,6 +108,7 @@
           <label>Artist handle <input name="artist" required maxlength="30" placeholder="@you"></label>
           <label>Glyph (text painted on it) <input name="glyph" maxlength="14" placeholder="AQUÍ"></label>
           <label>Layer <select name="layer"></select></label>
+          <label>Capa (whose it is) <select name="capa"></select></label>
           <label>Style <select name="style"></select></label>
           <label>Anchor <select name="anchor"></select></label>
           <label>Activation radius (m) <input name="radius" type="number" min="10" max="500" value="50"></label>
@@ -94,21 +150,31 @@
       <p>CAPAS is an open layer of art over the streets. Pieces are pinned to real coordinates and woken up by real anchors: a GPS radius, a sticker, a tag, a wall.</p>
       <ol>
         <li><b>No landlords.</b> Every piece is plain JSON under a free license. Fork the wall.</li>
-        <li><b>You have to be there.</b> Street pieces only open in place. Presence is the price of entry.</li>
+        <li><b>You have to be there.</b> Walk into a piece to catch it. Presence is the price of entry.</li>
         <li><b>Many layers, one city.</b> STREET, DREAM, MEMORY, SIGNAL. Toggle realities.</li>
         <li><b>Nobody deletes the past.</b> Pieces can be painted over, never erased. History stays in the repo.</li>
         <li><b>Brands pay rent, not rules.</b> Institutions can sponsor layers and routes. They don't get to own the protocol.</li>
       </ol>
-      <menu><button class="btn btn-primary" onclick="this.closest('dialog').close()">GET OUT THERE</button></menu>
+      <p class="small">Keep it on your phone: on Android tap INSTALL below; on iPhone use Share → Add to Home Screen.</p>
+      <menu>
+        <button class="btn" id="btn-install" hidden>INSTALL</button>
+        <button class="btn btn-primary" onclick="this.closest('dialog').close()">GET OUT THERE</button>
+      </menu>
     </article>
   </dialog>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-  <script src="js/data.js?v=202611021905"></script>
-  <script src="js/art.js?v=202611021905"></script>
-  <script src="js/store.js?v=202611021905"></script>
-  <script src="js/media.js?v=202611021905"></script>
-  <script src="js/app.js?v=202611021905"></script>
+  <script src="js/data.js?v=202611180853"></script>
+  <script src="js/art.js?v=202611180853"></script>
+  <script src="js/store.js?v=202611180853"></script>
+  <script src="js/media.js?v=202611180853"></script>
+  <script src="js/core.js?v=202611180853"></script>
+  <script src="js/card.js?v=202611180853"></script>
+  <script src="js/map.js?v=202611180853"></script>
+  <script src="js/ar.js?v=202611180853"></script>
+  <script src="js/collection.js?v=202611180853"></script>
+  <script src="js/create.js?v=202611180853"></script>
+  <script src="js/main.js?v=202611180853"></script>
 </body>
 </html>

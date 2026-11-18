@@ -11,14 +11,17 @@ const Theme = (() => {
   const root = document.documentElement;
   const KEY = 'capas.theme';
 
-  // ?theme=neutral switches (and remembers); ?theme=default resets.
+  const DEFAULT = 'grid';
+
+  // ?theme=punk or ?theme=neutral switches (and remembers); ?theme=default resets.
   let name = new URLSearchParams(location.search).get('theme');
   try {
     if (name === 'default') localStorage.removeItem(KEY);
     else if (name) localStorage.setItem(KEY, name);
     else name = localStorage.getItem(KEY);
   } catch { /* storage blocked: theme only lasts for this URL */ }
-  if (name && name !== 'default') root.dataset.theme = name;
+  if (!name || name === 'default') name = DEFAULT;
+  root.dataset.theme = name;
 
   const style = getComputedStyle(root); // live: always reflects the current theme
   function css(token) { return style.getPropertyValue(token).trim(); }
@@ -34,7 +37,7 @@ const Theme = (() => {
   }
 
   return {
-    name: name || 'default',
+    name,
     css,
     num: token => parseFloat(css(token)) || 0,
     alpha,

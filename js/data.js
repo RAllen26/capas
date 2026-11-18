@@ -31,6 +31,15 @@ const SUPPORTS = {
   model:    { label: '3D',    icon: '◆', desc: 'A 3D object pinned in space: GLB with textures and animation.' },
 };
 
+// Capas: whose a piece is. Layers say what kind of reality it is; capas say who put it there.
+// No accounts yet, so this is only a label and a filter. It becomes access rules with the backend.
+const CAPAS = {
+  public:      { label: 'PUBLIC',      desc: 'Open wall. Anyone can see it.' },
+  project:     { label: 'PROJECT',     desc: 'A curated drop with invited artists.' },
+  institution: { label: 'INSTITUTION', desc: 'Curated by a museum, school or city.' },
+  mine:        { label: 'MINE',        desc: 'Only on this device until it is published.' },
+};
+
 const STYLES = ['stencil', 'rings', 'glitch', 'signal'];
 
 // Artwork palettes belong to the pieces, not the brand: a rebrand must not repaint artists' work.
@@ -59,12 +68,13 @@ Piece schema (v0):
             src: relative path, https URL, or idb:<key> for files kept on this device
             model: { type: 'model', src: '*.glb', pose: { altitude (m above ground), heading (deg from north), scale } }
   license:  SPDX-ish string, default CC-BY-SA-4.0
+  capa:     key of CAPAS, default 'public'
 }
 `art` stays as the generated cover; the first image support replaces it when present.
 */
 
 const SEED_PIECES = [
-  { id: 'ojo-del-zocalo', title: 'Ojo del Zócalo', artist: '@tinta_rota', created: '2026-09-14', layer: 'memory',
+  { id: 'ojo-del-zocalo', capa: 'institution', title: 'Ojo del Zócalo', artist: '@tinta_rota', created: '2026-09-14', layer: 'memory',
     location: { lat: 19.4326, lng: -99.1332, radius: 80 }, anchor: { type: 'gps' },
     art: { style: 'rings', glyph: 'OJO', palette: PALETTES[2], seed: 11 },
     note: 'The lake under the plaza is still looking up at us.', license: 'CC-BY-SA-4.0',
@@ -80,7 +90,7 @@ const SEED_PIECES = [
       { type: 'physical', body: 'Stencil on the metal shutter of the last bakery on the block, plus QR sticker #001.' },
       { type: 'text', body: 'ESTE BARRIO NO ESTÁ EN VENTA.\nThis block is not for sale.\nIt was never yours to sell.' },
     ] },
-  { id: 'jardin-flotante', title: 'Jardín flotante 2080', artist: '@chinampa.exe', created: '2026-10-01', layer: 'dream',
+  { id: 'jardin-flotante', capa: 'project', title: 'Jardín flotante 2080', artist: '@chinampa.exe', created: '2026-10-01', layer: 'dream',
     location: { lat: 19.4119, lng: -99.1700, radius: 120 }, anchor: { type: 'gps' },
     art: { style: 'signal', glyph: '2080', palette: PALETTES[4], seed: 42 },
     note: 'Parque México if the water came back.', license: 'CC0-1.0' },
@@ -93,7 +103,7 @@ const SEED_PIECES = [
       { type: 'audio', src: 'assets/ruido-tepito.wav', caption: 'Market frequency, 8 s loop.', loop: true, onlyThere: true },
       { type: 'text', body: 'Turn it up. The market is louder than any speaker.' },
     ] },
-  { id: 'kiosco-morisco', title: 'Kiosco que respira', artist: '@morisca', created: '2026-06-11', layer: 'memory',
+  { id: 'kiosco-morisco', capa: 'institution', title: 'Kiosco que respira', artist: '@morisca', created: '2026-06-11', layer: 'memory',
     location: { lat: 19.4510, lng: -99.1580, radius: 70 }, anchor: { type: 'image', ref: 'kiosk facade' },
     art: { style: 'rings', glyph: '1884', palette: PALETTES[5], seed: 19 },
     note: 'Built for a world fair, landed here. Still breathing.', license: 'CC-BY-4.0',
@@ -101,7 +111,7 @@ const SEED_PIECES = [
       { type: 'image', src: 'assets/kiosco-1884.svg', caption: 'Built for a world\'s fair in 1884, moved to this plaza in 1910.' },
       { type: 'text', body: 'Every pavilion is a traveller. This one stayed.' },
     ] },
-  { id: 'coyote-digital', title: 'Coyote Digital', artist: '@nahual_404', created: '2026-09-30', layer: 'dream',
+  { id: 'coyote-digital', capa: 'project', title: 'Coyote Digital', artist: '@nahual_404', created: '2026-09-30', layer: 'dream',
     location: { lat: 19.3500, lng: -99.1626, radius: 90 }, anchor: { type: 'gps' },
     art: { style: 'stencil', glyph: 'COYO TL', palette: PALETTES[3], seed: 23 },
     note: 'The place of coyotes, re-wilded in the layer above.', license: 'CC-BY-SA-4.0',
@@ -127,7 +137,7 @@ const SEED_PIECES = [
       { type: 'physical', body: 'Open wall with QR sticker #014. Chalk is left in a tin at the corner.' },
       { type: 'text', body: 'aquí me enamoré — L.\naquí vivía mi abuela antes del 85\nwe were here 2026\n(add yours)' },
     ] },
-  { id: 'corona-tlalpan', title: 'Corona sobre el kiosco', artist: '@capas', created: '2026-11-02', layer: 'dream',
+  { id: 'corona-tlalpan', capa: 'project', title: 'Corona sobre el kiosco', artist: '@capas', created: '2026-11-02', layer: 'dream',
     location: { lat: 19.288894, lng: -99.166958, radius: 90 }, anchor: { type: 'gps' },
     art: { style: 'rings', glyph: 'TLALPAN', palette: PALETTES[3], seed: 1872 },
     note: 'Field test. A crown floating above the kiosk of the Plaza de la Constitución. Look up.', license: 'CC0-1.0',
@@ -137,7 +147,7 @@ const SEED_PIECES = [
       { type: 'text', body: 'Kiosk and plaza since 1872. Above them, a layer nobody built yet.' },
       { type: 'physical', body: 'No physical trace yet. This is a test: walk into the garden and look above the kiosk.' },
     ] },
-  { id: 'anillo-tlalpan', title: 'Anillo del kiosco', artist: '@capas', created: '2026-11-02', layer: 'memory',
+  { id: 'anillo-tlalpan', capa: 'project', title: 'Anillo del kiosco', artist: '@capas', created: '2026-11-02', layer: 'memory',
     location: { lat: 19.288894, lng: -99.166958, radius: 90 }, anchor: { type: 'gps' },
     art: { style: 'signal', glyph: '1872', palette: PALETTES[0], seed: 1873 },
     note: 'Field test. A torus 18 m across, floating around the kiosk, turning once every 24 s.', license: 'CC0-1.0',

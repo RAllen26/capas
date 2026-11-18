@@ -5,15 +5,18 @@
    Tier 2  ROLES           what each color is FOR. Components only read
                            roles, never raw palette values.
    Tier 3  SHAPE & MOTION  borders, corners, shadows, tilt, speed.
+   Tier 4  GESTURES        the few shapes tokens can't express (a theme's own
+                           marks), scoped to that theme at the bottom of this file.
 
    Canvas code (artworks, AR, radar) reads the same tokens through
    js/theme.js, so a change here reaches the map AND the camera view.
 
-   Try another theme: add ?theme=neutral to any URL (?theme=default to reset).
-   Add your own: copy the [data-theme="neutral"] block, rename it.
+   Themes: "grid" is the default (set in js/theme.js). The bare :root block below is
+   "punk", the first prototype look. Try one with ?theme=punk or ?theme=neutral on
+   any URL (?theme=default to reset). Add your own: copy a [data-theme] block.
    ===================================================================== */
 
-@import url("https://fonts.googleapis.com/css2?family=Rubik+Mono+One&family=Space+Mono:wght@400;700&family=Inter:wght@400;600;800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Rubik+Mono+One&family=Space+Mono:wght@400;700&family=Inter:wght@400;600;800&family=Archivo:wdth,wght@112,500;112,800&family=IBM+Plex+Mono:wght@400;600&family=Rock+Salt&display=swap");
 
 :root {
   /* ---- Tier 1: brand palette (v0 "punk xerox") ---- */
@@ -113,3 +116,116 @@
   --tilt: 0deg;
   --pin-tilt: 0;
 }
+
+/* =====================================================================
+   GRID — the default. A quiet digital surface: hairlines, a visible grid,
+   see-through panels. Then one loose, hand-made gesture in a single spray
+   color that crosses the grid: a scribble, a marker stroke, a blob.
+   ===================================================================== */
+:root[data-theme="grid"] {
+  /* Tier 1 */
+  --brand-1: #111111;       /* ink */
+  --brand-2: #4a3aff;       /* spray: the only loud color in the interface */
+  --brand-3: #35c9e8;
+  --brand-4: #ff8a2a;
+  --brand-dark: #111111;
+  --brand-light: #f6f6f3;
+  --brand-night: #dfe2e6;
+
+  --font-display: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --font-body: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  --font-hand: "Rock Salt", "Marker Felt", cursive;
+  --font-display-weight: 800;
+  --display-tracking: 0.01em;
+
+  /* Tier 2 */
+  --color-bg: #f1f1ee;
+  --color-on-bg: #111111;
+  --color-surface: rgba(248, 248, 245, .66);   /* glass: the map and the camera show through */
+  --color-on-surface: #111111;
+  --color-field: rgba(255, 255, 255, .7);
+  --color-line: #111111;
+  --color-primary: #111111;
+  --color-on-primary: #f6f6f3;
+  --color-accent: #4a3aff;
+  --color-on-accent: #ffffff;
+  --color-me: #4a3aff;
+  --color-sky: #dfe2e6;
+  --color-select: #4a3aff;
+
+  --layer-street: #c3ef2b;
+  --layer-dream: #ff6bb5;
+  --layer-memory: #35c9e8;
+  --layer-signal: #ff8a2a;
+
+  --map-bg: #e8e8e5;
+  --map-filter: grayscale(1) contrast(.88) brightness(1.1);
+
+  /* Tier 3 */
+  --border-w: 1px;
+  --radius: 0px;
+  --radius-chip: 0px;
+  --shadow-color: transparent;
+  --shadow-sm: none;
+  --shadow-sm-hover: none;
+  --shadow-sm-active: none;
+  --shadow-md: none;
+  --shadow-panel: none;
+  --shadow-dialog: 0 24px 80px rgba(17, 17, 17, .18);
+  --press: 0px;
+  --tilt: 0deg;
+  --pin-tilt: 0;
+
+  --glass: blur(14px) saturate(1.25);
+  --grid-size: 40px;
+  --grid-image:
+    linear-gradient(to right, rgba(17, 17, 17, .11) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(17, 17, 17, .11) 1px, transparent 1px);
+
+  /* the hand-made marks, drawn once here and reused */
+  --mark-scribble: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 16' preserveAspectRatio='none'%3E%3Cpath d='M2 10c13-8 21 5 35 0s19-8 33-2 27 6 48-4' fill='none' stroke='%234a3aff' stroke-width='3.5' stroke-linecap='round'/%3E%3C/svg%3E");
+  --mark-loop: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 56' preserveAspectRatio='none'%3E%3Cpath d='M44 5C22 2 5 13 6 28s19 24 38 22 32-13 29-27S54 4 30 9' fill='none' stroke='%234a3aff' stroke-width='2.5' stroke-linecap='round'/%3E%3C/svg%3E");
+  --mark-stroke: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 40' preserveAspectRatio='none'%3E%3Cpath d='M3 9C40 3 150 6 197 4c2 9-2 20 1 30-50 4-150 3-195 3 3-10-3-18 0-28z' fill='%234a3aff'/%3E%3C/svg%3E");
+  --mark-blob: 46% 54% 42% 58% / 58% 44% 56% 42%;
+}
+
+/* Tier 4: grid's gestures. Each one sits on a grid element and deliberately overruns it. */
+:root[data-theme="grid"] .logo { background: none; border: 0; padding: 2px 2px 8px; color: var(--color-on-bg); position: relative; letter-spacing: .12em; }
+:root[data-theme="grid"] .logo::after {
+  content: ""; position: absolute; left: -6px; right: -10px; bottom: -2px; height: 12px;
+  background: var(--mark-scribble) center / 100% 100% no-repeat;
+}
+:root[data-theme="grid"] .logo-mark { display: none; }
+
+:root[data-theme="grid"] .tab { letter-spacing: .08em; font-weight: 500; }
+:root[data-theme="grid"] .tab.on { background: var(--mark-loop) center / 74px 50px no-repeat; color: var(--color-on-surface); font-weight: 800; }
+:root[data-theme="grid"] .tab-create {
+  background: var(--color-accent); color: var(--color-on-accent); border-radius: var(--mark-blob);
+  margin: -16px 8px 6px; transform: rotate(-4deg); font-weight: 800;
+}
+
+:root[data-theme="grid"] .toast,
+:root[data-theme="grid"] .status.caught {
+  background: var(--mark-stroke) center / 100% 100% no-repeat; color: var(--color-on-accent); border: 0;
+  font-family: var(--font-hand); font-weight: 400; font-size: 11px; line-height: 1.9; padding: 8px 16px;
+  -webkit-backdrop-filter: none; backdrop-filter: none;
+}
+:root[data-theme="grid"] .pin.caught::before { background: var(--color-accent); color: var(--color-on-accent); border-radius: var(--mark-blob); border-color: transparent; }
+
+:root[data-theme="grid"] .chip { background: var(--color-surface); border-bottom: 4px solid var(--c); font-weight: 500; letter-spacing: .08em; }
+:root[data-theme="grid"] .chip.off { background: none; border-color: color-mix(in srgb, var(--color-line) 30%, transparent); color: color-mix(in srgb, var(--color-on-bg) 45%, transparent); }
+:root[data-theme="grid"] .tag { font-weight: 500; letter-spacing: .06em; border-width: 1px; }
+:root[data-theme="grid"] .support-head, :root[data-theme="grid"] .drawer-head { font-weight: 500; letter-spacing: .08em; }
+:root[data-theme="grid"] .note { border-left-width: 2px; }
+:root[data-theme="grid"] .tile.missing img { filter: grayscale(1) brightness(1.7) contrast(.35); }
+
+:root[data-theme="grid"] .gate { background: var(--grid-image) 0 0 / var(--grid-size) var(--grid-size), var(--color-bg); }
+:root[data-theme="grid"] .gate h1 { text-shadow: none; position: relative; z-index: 0; }
+:root[data-theme="grid"] .gate h1::before {
+  content: ""; position: absolute; z-index: -1; inset: -18% -6% -22% -10%;
+  background: var(--color-accent); border-radius: var(--mark-blob); transform: rotate(-6deg); opacity: .9;
+}
+:root[data-theme="grid"] .gate h1 { color: var(--color-on-accent); }
+:root[data-theme="grid"] #manifesto h2 { background: var(--mark-scribble) left bottom / 78% 12px no-repeat; padding-bottom: 14px; }
+:root[data-theme="grid"] .col-head h2 { color: var(--color-on-bg); background: var(--mark-scribble) left bottom / 240px 12px no-repeat; padding-bottom: 12px; }
+:root[data-theme="grid"] .col-count b { color: var(--color-accent); }

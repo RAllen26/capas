@@ -95,11 +95,10 @@ const Media = (() => {
     if (items.some(s => s.type === 'model')) loadModelViewer();
     for (const m of el.querySelectorAll('[data-i]')) {
       const u = await url(items[m.dataset.i].src);
-      if (u) m.setAttribute('src', u); // attribute, so <model-viewer> sees it even if it upgrades later
-      if (m.localName === 'model-viewer') m.addEventListener('error', () => {
-        m.replaceWith(Object.assign(document.createElement('p'), { className: 'support-locked', textContent: 'This 3D model could not load on this device.' }));
-      }, { once: true });
-      else m.replaceWith(Object.assign(document.createElement('p'), { className: 'support-locked', textContent: 'This file is stored on another device.' }));
+      const note = text => m.replaceWith(Object.assign(document.createElement('p'), { className: 'support-locked', textContent: text }));
+      if (!u) { note('This file is stored on another device.'); continue; }
+      m.setAttribute('src', u); // attribute, so <model-viewer> sees it even if it upgrades later
+      if (m.localName === 'model-viewer') m.addEventListener('error', () => note('This 3D model could not load on this device.'), { once: true });
     }
   }
 

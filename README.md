@@ -4,21 +4,29 @@ A geospatial street-art gallery that lives in layers above the city.
 Pieces are pinned to real coordinates, woken up by real-world anchors, and seen
 through your phone camera. Open source, local-first, punk.
 
-## What's here (v0 base)
+## What's here
+
+One installable web app with four tabs: **Map**, **AR**, **Collection** and **+ Create**.
 
 | File | What it does |
 |---|---|
-| `index.html` + `js/app.js` | Map explorer: pieces on a dark map, layer toggles, piece sheets, **drop a piece**, QR anchor printing, export to JSON, manifesto |
-| `ar.html` + `js/ar.js` | Location-based AR in the browser: camera + GPS + compass, radar, locked/unlocked pieces, ghost mode, drag-to-look on desktop |
-| `js/data.js` | Data model (layers, anchors, schema) + seed pieces in CDMX |
+| `index.html` | The app shell: top bar, the three views, tab bar, piece card, dialogs |
+| `js/core.js` | Shared state (pieces, filters, your location), events, catching, and the router (`#map`, `#ar/ID`, `#collection`, `#piece/ID`) |
+| `js/card.js` | The piece card, shared by every view, and the printable QR anchor |
+| `js/map.js` | Map view: pins, list, find me, picking a spot for a new piece |
+| `js/ar.js` + `js/three-layer.js` | AR view: camera + GPS + compass, radar, live/ghost modes, GLB models at their real bearing and distance |
+| `js/collection.js` | Collection view: pieces you caught, pieces still out there, pieces you made, export |
+| `js/create.js` | The create flow, from the map (tap a spot) or from AR (8 m ahead of you), with supports and 3D upload |
+| `js/main.js` | Boot: filters, tabs, install, first route, scanned anchors (`?scan=ID`) |
+| `js/data.js` | Data model (layers, capas, anchors, supports, schema) + seed pieces |
+| `js/store.js` | Local-first storage (pieces, catches) + geo math. Swap this for a backend later |
+| `js/media.js` + `assets/` | Supports: renders each piece's media and keeps uploads on the device |
 | `js/art.js` | Procedural artworks, so the gallery runs with zero uploaded media |
-| `js/media.js` + `assets/` | Supports: renders each piece's media (on the street, text, image, video, sound) and keeps uploads on the device |
-| `js/three-layer.js` | 3D in AR: GLB models (textures, animation) placed at their real bearing and distance with three.js |
-| `tools/make_totem.py` | Generates the sample 3D piece `assets/coyote-totem.glb` |
-| `tools/make_ring.py` | Generates `assets/kiosk-ring.glb`, the floating torus around the Tlalpan kiosk |
-| `js/store.js` | Local-first storage + geo math. Swap this for a backend later |
 | `css/theme.css` + `js/theme.js` | **The whole visual identity**: palette, roles, fonts, borders, corners, shadows, map mood, brand name |
+| `manifest.webmanifest` + `sw.js` | Installable app (PWA): home-screen icon, full-screen, opens on a weak signal |
+| `ar.html` | Forwards old links and printed stickers (`ar.html?piece=ID`) into the app |
 | `theme.html` | Live style guide of every token; add `?theme=neutral` to any page to try the alternative theme |
+| `tools/` | `bump_version.py` (run before each release), sample 3D generators, icon generator |
 | `IDEAS.md` | Parking lot for ideas not yet on the roadmap |
 
 No build step, no framework, no accounts. Static files.
@@ -39,6 +47,10 @@ Components only read roles, so a new identity is mostly new values in Tier 1. Th
 Artworks keep their own palettes and font on purpose: a rebrand never repaints artists' work.
 To compare looks, add a `[data-theme="name"]` block and open any page with `?theme=name`.
 
+Themes so far: **grid** (default: hairlines, a visible grid, glass panels, and hand-made marks in one spray color),
+**punk** (the first prototype look, `?theme=punk`) and **neutral** (`?theme=neutral`). `?theme=default` goes back to grid.
+A theme's own shapes (grid's scribble, blob and marker stroke) live in "Tier 4" at the bottom of `css/theme.css`.
+
 ## Concepts
 
 **Layers (dimensions).** The same corner exists in several realities at once:
@@ -49,12 +61,18 @@ To compare looks, add a `[data-theme="name"]` block and open any page with `?the
 
 **Anchors (how a piece wakes up).**
 - `gps`: unlocks inside its radius. Works today.
-- `qr`: a printed sticker on the wall points to `ar.html?piece=ID`. Works today (button *QR ANCHOR*).
+- `qr`: a printed sticker on the wall points to `?scan=ID`. Works today (button *QR ANCHOR*).
 - `nfc`: same URL written to an NFC sticker; tapping the phone opens it. Works today with any NFC writer app.
 - `image`: the mural itself triggers the piece via image tracking. Roadmap (MindAR.js).
 
+**Capas (whose it is).** `PUBLIC`, `PROJECT` (curated drop), `INSTITUTION`, `MINE` (only on this device).
+Today a label and a filter; with a backend they become who can see and post.
+
+**Catching (your collection).** Walk inside a piece's radius with the app open, or scan its sticker, and you catch it.
+Caught pieces stay in your collection, and their on-site-only supports stay open for you. Kept on the device for now.
+
 **Supports (one piece, many media).** A piece lists the media it lives in: its physical trace on the street,
-text, image, video, sound, and soon 3D. Each medium shows what it can, and a support marked `onlyThere`
+text, image, video, sound and 3D (GLB). Each medium shows what it can, and a support marked `onlyThere`
 opens only on site (inside the radius, or by scanning the anchor).
 
 **Ghost mode.** If you're far from every piece, AR projects the gallery around you so it's explorable from anywhere.

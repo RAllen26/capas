@@ -1,59 +1,8 @@
 <!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
-  <title>CAPAS — AR</title>
-  <script src="js/theme.js?v=202611021905"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <script type="importmap">
-    { "imports": {
-      "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
-      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
-    } }
-  </script>
-  <link rel="stylesheet" href="css/theme.css?v=202611021905">
-  <link rel="stylesheet" href="css/style.css?v=202611021905">
-  <link rel="stylesheet" href="css/ar.css?v=202611021905">
-</head>
-<body class="ar">
-  <video id="cam" playsinline muted autoplay></video>
-  <canvas id="bg"></canvas>
-  <canvas id="gl"></canvas>
-  <canvas id="view"></canvas>
-
-  <header class="bar">
-    <a class="logo" href="./"><span data-brand>CAPAS</span><span class="logo-mark">/</span>AR</a>
-    <nav><a class="btn" href="./">MAP</a></nav>
-  </header>
-
-  <div class="hud" id="hud">
-    <button id="hud-mode" type="button">—</button>
-    <span id="hud-heading">—</span>
-    <span id="hud-gps">—</span>
-    <span id="hud-3d" hidden></span>
-  </div>
-
-  <div class="radar" id="radar"><canvas id="radar-c" width="160" height="160"></canvas></div>
-
-  <button class="btn btn-primary pin-here" id="pin-here" type="button">◆ PIN TOTEM HERE</button>
-  <div class="card" id="card" hidden></div>
-
-  <section class="gate" id="gate">
-    <div class="gate-box">
-      <p class="tag" style="--c:var(--color-primary)">LAYER ABOVE THE CITY</p>
-      <h1>OPEN YOUR EYES.</h1>
-      <p id="gate-focus"></p>
-      <p class="small">CAPAS needs your camera, location and motion sensors. Nothing leaves your phone.</p>
-      <button class="btn btn-primary big" id="start">ENTER THE LAYER</button>
-      <p class="small">On desktop: drag to look around.</p>
-    </div>
-  </section>
-
-  <script src="js/data.js?v=202611021905"></script>
-  <script src="js/art.js?v=202611021905"></script>
-  <script src="js/store.js?v=202611021905"></script>
-  <script src="js/media.js?v=202611021905"></script>
-  <script src="js/ar.js?v=202611021905"></script>
-</body>
-</html>
+<meta charset="utf-8">
+<title>CAPAS</title>
+<!-- AR now lives inside the app. Old links and printed QR stickers (ar.html?piece=ID) land here and are forwarded. -->
+<script>
+  const id = new URLSearchParams(location.search).get('piece');
+  location.replace(id ? './?scan=' + encodeURIComponent(id) : './#ar');
+</script>

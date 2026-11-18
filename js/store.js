@@ -8,6 +8,13 @@ const Store = (() => {
     try { return JSON.parse(localStorage.getItem(KEY) || '[]'); } catch { return []; }
   }
 
+  const CATCH_KEY = 'capas.catches.v0';
+  let cache = null;
+  function catches() {
+    if (!cache) { try { cache = JSON.parse(localStorage.getItem(CATCH_KEY) || '{}'); } catch { cache = {}; } }
+    return cache;
+  }
+
   function writeLocal(list) {
     try { localStorage.setItem(KEY, JSON.stringify(list)); return true; } catch { return false; }
   }
@@ -18,6 +25,18 @@ const Store = (() => {
     add(piece) { const list = readLocal(); list.push(piece); return writeLocal(list); },
     remove(id) { return writeLocal(readLocal().filter(p => p.id !== id)); },
     exportLocal: () => JSON.stringify(readLocal(), null, 2),
+
+    // Catches: pieces you collected by being there (GPS) or scanning their anchor. Kept on this device.
+    catches,
+    caught: id => catches()[id] || null,
+    catch(id, how) {
+      const c = catches();
+      if (c[id]) return false;
+      c[id] = { at: new Date().toISOString(), how };
+      try { localStorage.setItem(CATCH_KEY, JSON.stringify(c)); } catch { /* storage blocked: lasts for this visit */ }
+      cache = c;
+      return true;
+    },
   };
 })();
 
