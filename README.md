@@ -26,7 +26,7 @@ One installable web app with four tabs: **Map**, **AR**, **Collection** and **+ 
 | `manifest.webmanifest` + `sw.js` | Installable app (PWA): home-screen icon, full-screen, opens on a weak signal |
 | `ar.html` | Forwards old links and printed stickers (`ar.html?piece=ID`) into the app |
 | `theme.html` | Live style guide of every token; add `?theme=neutral` to any page to try the alternative theme |
-| `tools/` | `bump_version.py` (run before each release), sample 3D generators, icon generator |
+| `tools/` | `bump_version.py` (run before each release), 3D generators (`make_totem.py`, `make_ring.py OUT.glb "TEXT"`), icon generator |
 | `IDEAS.md` | Parking lot for ideas not yet on the roadmap |
 
 No build step, no framework, no accounts. Static files.

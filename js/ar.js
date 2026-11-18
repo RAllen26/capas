@@ -41,7 +41,7 @@ const ARView = (() => {
     if (threeLoading || !App.state.pieces.some(modelOf)) return;
     threeLoading = true;
     status3d('LOADING');
-    import('./three-layer.js?v=202611180853').then(m => {
+    import('./three-layer.js?v=202611181341').then(m => {
       three = m.createLayer($('#ar-gl'));
       resize();
       loadModels();

@@ -1,6 +1,8 @@
-# Builds assets/kiosk-ring.glb: a floating torus (real meters) to circle a kiosk.
-# "CAPAS · TLALPAN · 1872" wraps its outer side; orbiting shards; spins, wobbles, bobs (24 s loop).
-# Usage: python3 tools/make_ring.py assets/kiosk-ring.glb
+# Builds a floating torus (real meters, 18 m across) with text wrapped around its outer side,
+# orbiting shards; spins, wobbles, bobs (24 s loop). Scale it per piece with pose.scale.
+# Usage: python3 tools/make_ring.py OUT.glb ["TEXT"]
+#   python3 tools/make_ring.py assets/kiosk-ring.glb                      (CAPAS · TLALPAN · 1872)
+#   python3 tools/make_ring.py assets/stadium-ring.glb " CAPAS · AZTECA · 1966 "
 import json, math, struct, zlib, sys
 
 out_path = sys.argv[1]
@@ -16,9 +18,12 @@ FONT = {
     'N': '10001 11001 10101 10011 10001 10001 10001', '1': '00100 01100 00100 00100 00100 00100 01110',
     '8': '01110 10001 10001 01110 10001 10001 01110', '7': '11111 00001 00010 00100 01000 01000 01000',
     '2': '01110 10001 00001 00010 00100 01000 11111', '·': '00000 00000 01110 01110 01110 00000 00000',
+    'Z': '11111 00001 00010 00100 01000 10000 11111', 'E': '11111 10000 10000 11110 10000 10000 11111',
+    'O': '01110 10001 10001 10001 10001 10001 01110', '6': '00110 01000 10000 11110 10001 10001 01110',
+    '9': '01110 10001 10001 01111 00001 00010 01100',
     ' ': '00000 00000 00000 00000 00000 00000 00000',
 }
-TEXT = ' CAPAS · TLALPAN · 1872 '
+TEXT = sys.argv[2] if len(sys.argv) > 2 else ' CAPAS · TLALPAN · 1872 '
 W, H, PX = 1024, 64, 6
 INK, ACID, PINK = (11, 11, 11), (232, 255, 42), (255, 62, 165)
 img = [[INK] * W for _ in range(H)]

@@ -156,4 +156,13 @@ const SEED_PIECES = [
         pose: { altitude: 4.5, heading: 0, scale: 1 } },
       { type: 'text', body: 'CAPAS · TLALPAN · 1872. The plaza turns slowly around its oldest structure.' },
     ] },
+  { id: 'halo-azteca', capa: 'project', title: 'Halo del Azteca', artist: '@capas', created: '2026-11-18', layer: 'signal',
+    location: { lat: 19.302979, lng: -99.15047, radius: 700 }, anchor: { type: 'gps' },
+    art: { style: 'rings', glyph: 'AZTECA', palette: PALETTES[2], seed: 1966 },
+    note: 'Field test. A ring 180 m across floating 75 m over the pitch, turning once every 24 s. Visible from the streets around the stadium.', license: 'CC0-1.0',
+    supports: [
+      { type: 'model', src: 'assets/stadium-ring.glb', caption: '180 m wide, 11 m thick, 75 m up. Look up and toward the stadium.',
+        pose: { altitude: 75, heading: 0, scale: 10 } },
+      { type: 'text', body: 'CAPAS · AZTECA · 1966. A halo for the stadium, seen from the neighbourhood around it.' },
+    ] },
 ];

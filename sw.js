@@ -3,7 +3,7 @@
 // Libraries and fonts from CDNs: cached copy first, they never change at a given version.
 // Map tiles are left to the browser.
 
-const VERSION = '202611180853';
+const VERSION = '202611181341';
 const CACHE = 'capas-' + VERSION;
 const SHELL = [
   './', 'index.html', 'manifest.webmanifest',
