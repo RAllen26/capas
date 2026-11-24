@@ -42,7 +42,7 @@ const ARView = (() => {
     if (threeLoading || !App.state.pieces.some(modelOf)) return;
     threeLoading = true;
     status3d('LOADING');
-    import('./three-layer.js?v=202611241313').then(m => {
+    import('./three-layer.js?v=202611241318').then(m => {
       three = m.createLayer($('#ar-gl'));
       resize();
       applyWalls();
@@ -392,6 +392,7 @@ const ARView = (() => {
     }
     if (!s.camera) drawVoid(bctx, W, H, f, horizon);
     three?.setView(s.heading, s.pitch, f, W, H, s.roll);
+    three?.setMassing(!s.camera);
     three?.hideAll();
 
     s.hits = [];

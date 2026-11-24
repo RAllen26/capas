@@ -22,7 +22,7 @@ const App = (() => {
   const emit = (evt, data) => (listeners[evt] || []).forEach(fn => fn(data));
 
   // ---------- pieces & filters ----------
-  const capaOf = p => p.capa || 'public';
+  const capaOf = p => CAPA_ALIAS[p.capa] || p.capa || 'street';
   const piece = id => state.pieces.find(p => p.id === id);
   const visible = () => state.pieces.filter(p => state.layersOn.has(p.layer) && (state.capa === 'all' || capaOf(p) === state.capa));
   function reload() { state.pieces = Store.all(); emit('pieces'); checkCatches(); }

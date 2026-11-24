@@ -218,6 +218,9 @@
 :root[data-theme="grid"] .support-head, :root[data-theme="grid"] .drawer-head { font-weight: 500; letter-spacing: .08em; }
 :root[data-theme="grid"] .note { border-left-width: 2px; }
 :root[data-theme="grid"] .tile.missing img { filter: grayscale(1) brightness(1.7) contrast(.35); }
+:root[data-theme="grid"] .hero-card h2, :root[data-theme="grid"] .wall .post-caption b { background: var(--mark-scribble) left bottom / 100% 8px no-repeat; padding-bottom: 6px; }
+:root[data-theme="grid"] .hero-card h2 { display: inline-block; align-self: flex-start; }
+:root[data-theme="grid"] .post-caption b { padding-bottom: 2px; background-size: 100% 5px; }
 
 :root[data-theme="grid"] .gate { background: var(--grid-image) 0 0 / var(--grid-size) var(--grid-size), var(--color-bg); }
 :root[data-theme="grid"] .gate h1 { text-shadow: none; position: relative; z-index: 0; }

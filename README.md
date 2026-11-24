@@ -6,7 +6,7 @@ through your phone camera. Open source, local-first, punk.
 
 ## What's here
 
-One installable web app with four tabs: **Map**, **AR**, **Collection** and **+ Create**.
+One installable web app. Browse and social: **Map**, **Wall** (the feed), **AR**, **Collection** (your profile). Making: **+ Create**.
 
 | File | What it does |
 |---|---|
@@ -15,6 +15,8 @@ One installable web app with four tabs: **Map**, **AR**, **Collection** and **+ 
 | `js/card.js` | The piece card, shared by every view, and the printable QR anchor |
 | `js/map.js` | Map view: pins, list, find me, picking a spot for a new piece |
 | `js/ar.js` + `js/three-layer.js` | AR view: camera + GPS + compass, radar, live/ghost modes, GLB models at their real bearing and distance |
+| `js/wall.js` | Wall view: the feed. Story circles per capa, the HERO show, one post per piece; double-tap to like |
+| `js/avatar.js` | Generated avatars for every handle; yours is editable on your profile |
 | `js/collection.js` | Collection view: pieces you caught, pieces still out there, pieces you made, export |
 | `js/create.js` | The create flow, from the map (tap a spot) or from AR (8 m ahead of you), with supports and 3D upload |
 | `js/main.js` | Boot: filters, tabs, install, first route, scanned anchors (`?scan=ID`) |
@@ -65,7 +67,8 @@ A theme's own shapes (grid's scribble, blob and marker stroke) live in "Tier 4" 
 - `nfc`: same URL written to an NFC sticker; tapping the phone opens it. Works today with any NFC writer app.
 - `image`: the mural itself triggers the piece via image tracking. Roadmap (MindAR.js).
 
-**Capas (whose it is).** `PUBLIC`, `PROJECT` (curated drop), `INSTITUTION`, `MINE` (only on this device).
+**Capas (whose it is).** `HERO` (the show on now: an exhibition, festival or brand activation), `STREET` (public),
+`CREW` (your people), `ME` (private, only on this device). They're the story circles at the top of the Wall.
 Today a label and a filter; with a backend they become who can see and post.
 
 **Catching (your collection).** Walk inside a piece's radius with the app open, or scan its sticker, and you catch it.
@@ -81,7 +84,7 @@ Physically present = real placement + unlocking.
 and small GPS wobbles are ignored, so pieces stay put like sculptures. If a piece sits beside its building, drag sideways to align the layer.
 **Walls.** Buildings from OpenStreetMap (footprint + height or floors) hide pieces behind them, invisibly; X-ray mode
 leaves a faint outline of what's hidden. HUD: `WALLS` cycles X-RAY / HIDE / OFF, `EYE` sets your floor so a view from a window clears the roofs.
-Only a rough ~200 m area is sent to the map server.
+Only a rough ~200 m area is sent to the map server. Without a camera the same buildings show as a grey massing model.
 A landmark piece (`seenFrom`, in meters) shows at its real place from farther away, like a giant ring over a building you can see from your window.
 
 ## Roadmap

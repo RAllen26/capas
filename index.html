@@ -12,7 +12,7 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <script src="js/theme.js?v=202611241313"></script>
+  <script src="js/theme.js?v=202611241318"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <script type="importmap">
     { "imports": {
@@ -21,9 +21,9 @@
     } }
   </script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-  <link rel="stylesheet" href="css/theme.css?v=202611241313">
-  <link rel="stylesheet" href="css/style.css?v=202611241313">
-  <link rel="stylesheet" href="css/ar.css?v=202611241313">
+  <link rel="stylesheet" href="css/theme.css?v=202611241318">
+  <link rel="stylesheet" href="css/style.css?v=202611241318">
+  <link rel="stylesheet" href="css/ar.css?v=202611241318">
 </head>
 <body>
   <header class="bar">
@@ -79,6 +79,11 @@
     </div>
   </section>
 
+  <!-- WALL -->
+  <section class="view" id="view-wall" hidden>
+    <div class="wall" id="wall"></div>
+  </section>
+
   <!-- COLLECTION -->
   <section class="view" id="view-collection" hidden>
     <div class="collection" id="collection"></div>
@@ -88,6 +93,7 @@
 
   <nav class="tabbar" aria-label="Sections">
     <button class="tab" data-view="map"><i>▦</i>MAP</button>
+    <button class="tab" data-view="wall"><i>▤</i>WALL</button>
     <button class="tab" data-view="ar"><i>▲</i>AR</button>
     <button class="tab" data-view="collection"><i>●<sup id="tab-count"></sup></i>COLLECTION</button>
     <button class="tab tab-create" id="tab-create"><i>+</i>CREATE</button>
@@ -167,16 +173,18 @@
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-  <script src="js/data.js?v=202611241313"></script>
-  <script src="js/art.js?v=202611241313"></script>
-  <script src="js/store.js?v=202611241313"></script>
-  <script src="js/media.js?v=202611241313"></script>
-  <script src="js/core.js?v=202611241313"></script>
-  <script src="js/card.js?v=202611241313"></script>
-  <script src="js/map.js?v=202611241313"></script>
-  <script src="js/ar.js?v=202611241313"></script>
-  <script src="js/collection.js?v=202611241313"></script>
-  <script src="js/create.js?v=202611241313"></script>
-  <script src="js/main.js?v=202611241313"></script>
+  <script src="js/data.js?v=202611241318"></script>
+  <script src="js/art.js?v=202611241318"></script>
+  <script src="js/avatar.js?v=202611241318"></script>
+  <script src="js/store.js?v=202611241318"></script>
+  <script src="js/media.js?v=202611241318"></script>
+  <script src="js/core.js?v=202611241318"></script>
+  <script src="js/card.js?v=202611241318"></script>
+  <script src="js/map.js?v=202611241318"></script>
+  <script src="js/ar.js?v=202611241318"></script>
+  <script src="js/wall.js?v=202611241318"></script>
+  <script src="js/collection.js?v=202611241318"></script>
+  <script src="js/create.js?v=202611241318"></script>
+  <script src="js/main.js?v=202611241318"></script>
 </body>
 </html>

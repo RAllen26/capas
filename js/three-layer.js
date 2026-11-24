@@ -95,6 +95,10 @@ export function createLayer(canvas) {
   const wallMat = new THREE.MeshBasicMaterial({ colorWrite: false });
   const xrayMat = new THREE.MeshBasicMaterial({ color: 0x4a3aff, wireframe: true, transparent: true, opacity: 0.28, depthTest: false, depthWrite: false });
   let wallMode = 'xray';   // 'xray' | 'hide' | 'off'
+  // No camera: show the same buildings as a schematic massing model instead of invisible walls.
+  const massMat = new THREE.MeshLambertMaterial({ color: 0xf4f4f0, emissive: 0x8c8c88, transparent: true, opacity: 0.78 });
+  const edgeMat = new THREE.LineBasicMaterial({ color: 0x111111, transparent: true, opacity: 0.6 });
+  let massing = false;
 
   // footprints: [{ pts: [[east, north], ...] in meters around (0,0), h: meters }]
   function setWalls(footprints) {
@@ -112,14 +116,23 @@ export function createLayer(canvas) {
     if (!geos.length) return 0;
     const merged = mergeGeometries(geos);
     geos.forEach(g => g.dispose());
-    const mesh = new THREE.Mesh(merged, wallMat);
-    mesh.renderOrder = -1;   // depth first, so pieces behind are cut
-    walls.add(mesh);
+    merged.computeVertexNormals();
+    const mesh = new THREE.Mesh(merged, massing ? massMat : wallMat);
+    mesh.renderOrder = massing ? 1 : -1;   // invisible walls: depth first, so pieces behind are cut
+    const edges = new THREE.LineSegments(new THREE.EdgesGeometry(merged, 30), edgeMat);
+    edges.visible = massing;
+    walls.add(mesh, edges);
     return footprints.length;
   }
   // Where the walls' (0,0) sits relative to you, in meters.
   function setWallsOffset(east, north) { walls.position.set(east, 0, -north); }
   function setWallMode(m) { wallMode = m; }
+  function setMassing(on) {
+    if (on === massing) return;
+    massing = on;
+    const [mesh, edges] = walls.children;
+    if (mesh) { mesh.material = on ? massMat : wallMat; mesh.renderOrder = on ? 1 : -1; edges.visible = on; }
+  }
   function setEye(m) { camera.position.y = m; }
 
   function render() {
@@ -127,7 +140,7 @@ export function createLayer(canvas) {
     items.forEach(it => it.group.visible && it.mixer.update(dt));
     renderer.clear();
     const useWalls = wallMode !== 'off' && walls.children.length > 0;
-    if (useWalls && wallMode === 'xray') {
+    if (useWalls && wallMode === 'xray' && !massing) {
       walls.visible = false;
       scene.overrideMaterial = xrayMat;
       renderer.render(scene, camera);
@@ -138,5 +151,5 @@ export function createLayer(canvas) {
     renderer.render(scene, camera);
   }
 
-  return { add, has, place, hideAll, setView, project, resize, render, setWalls, setWallsOffset, setWallMode, setEye };
+  return { add, has, place, hideAll, setView, project, resize, render, setWalls, setWallsOffset, setWallMode, setEye, setMassing };
 }

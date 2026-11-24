@@ -29,7 +29,8 @@ const Create = (() => {
       seed: Math.floor(Math.random() * 1e6),
     };
     form.reset();
-    form.capa.value = 'mine';
+    form.capa.value = 'me';
+    if (!form.artist.value && Avatar.me().handle !== '@you') form.artist.value = Avatar.me().handle;
     form.style.value = STYLES[Math.floor(Math.random() * STYLES.length)];
     $('#drop-supports').innerHTML = '';
     $('#drop-where').textContent = `${spot.lat.toFixed(5)}, ${spot.lng.toFixed(5)}`;
@@ -44,7 +45,7 @@ const Create = (() => {
     return {
       id: slug(title) + '-' + draft.seed.toString(36),
       title,
-      artist: (f.artist?.trim() || '@anon').replace(/^([^@])/, '@$1'),
+      artist: (f.artist?.trim() || Avatar.me().handle).replace(/^([^@])/, '@$1'),
       created: new Date().toISOString().slice(0, 10),
       layer: f.layer,
       capa: f.capa,
@@ -149,7 +150,7 @@ const Create = (() => {
     draft = null;
     if (!Store.add(p)) App.toast('Could not save on this device (storage is blocked).');
     App.state.layersOn.add(p.layer);
-    if (App.state.capa !== 'all' && App.state.capa !== p.capa) { App.state.capa = 'all'; $('#capa-filter').value = 'all'; }
+    if (App.state.capa !== 'all' && App.state.capa !== App.capaOf(p)) { App.state.capa = 'all'; $('#capa-filter').value = 'all'; }
     App.emit('filter');
     App.reload();
     if (App.state.view === 'ar') ARView.select(p.id);

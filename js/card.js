@@ -22,7 +22,7 @@ const Card = (() => {
       <div class="sheet-body">
         <span class="tag" style="--c:${layer.color}" title="${layer.desc}">${layer.label}</span><span class="tag" title="${capa.desc}">${capa.label}</span><span class="tag">${anchor.label}</span>
         <h2>${esc(p.title)}</h2>
-        <div>${esc(p.artist)}</div>
+        <div class="by">${Avatar.img(p.artist)}<span>${esc(p.artist)}</span></div>
         ${statusLine(p, d)}
         <div class="support-chips">${Media.chips(p)}</div>
         ${p.note ? `<p class="note">${esc(p.note)}</p>` : ''}
