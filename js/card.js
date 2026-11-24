@@ -23,7 +23,7 @@ const Card = (() => {
         <span class="tag" style="--c:${layer.color}" title="${layer.desc}">${layer.label}</span><span class="tag" title="${capa.desc}">${capa.label}</span><span class="tag">${anchor.label}</span>
         <h2>${esc(p.title)}</h2>
         <div class="by">${Avatar.img(p.artist)}<span>${esc(p.artist)}</span></div>
-        ${statusLine(p, d)}
+        ${p.draft ? '<p class="status">✎ DRAFT · only you can see it, in your profile. Edit it in the studio to publish.</p>' : statusLine(p, d)}
         <div class="support-chips">${Media.chips(p)}</div>
         ${p.note ? `<p class="note">${esc(p.note)}</p>` : ''}
         <div class="supports" id="sheet-supports"></div>
@@ -38,7 +38,7 @@ const Card = (() => {
           ${inAR ? '<button class="btn btn-accent" data-act="map">SHOW ON MAP</button>' : '<button class="btn btn-accent" data-act="ar">VIEW IN AR ▲</button>'}
           <a class="btn" target="_blank" rel="noopener" href="https://www.openstreetmap.org/directions?to=${p.location.lat},${p.location.lng}">GO THERE</a>
           <button class="btn" data-act="qr">QR ANCHOR</button>
-          ${p.local ? '<button class="btn" data-act="delete">PAINT OVER</button>' : ''}
+          ${p.local ? `<button class="btn" data-act="studio">EDIT IN STUDIO</button>${inAR ? '<button class="btn" data-act="adjust">ADJUST HERE</button>' : ''}<button class="btn" data-act="delete">PAINT OVER</button>` : ''}
         </div>
       </div>`;
     sheet.hidden = false;
@@ -70,6 +70,8 @@ const Card = (() => {
     if (act === 'ar') App.go('ar', id);
     if (act === 'map') App.route('#piece/' + id);
     if (act === 'qr') showQR(id);
+    if (act === 'studio') Studio.edit(id);
+    if (act === 'adjust') { close(); ARView.adjust(id); }
     if (act === 'delete') {
       const btn = e.target.closest('button');
       if (!btn.dataset.armed) { btn.dataset.armed = '1'; btn.textContent = 'SURE? TAP AGAIN'; return; }

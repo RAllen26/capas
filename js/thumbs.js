@@ -3,7 +3,7 @@
 
 const Thumbs = (() => {
   let mod = null;
-  const stage = () => (mod ||= import('./stage.js?v=202611241322'));
+  const stage = () => (mod ||= import('./stage.js?v=202611241357'));
   const BLANK = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==';
 
   function fill(root) {

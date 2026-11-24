@@ -6,7 +6,7 @@ through your phone camera. Open source, local-first, punk.
 
 ## What's here
 
-One installable web app. Browse and social: **Map**, **Wall** (the feed), **AR**, **Collection** (your profile). Making: **+ Create**.
+One installable web app. Browse and social: **Map**, **Wall** (the feed), **AR**, **Collection** (your profile). Making: **+ Create** opens the **Studio**.
 
 | File | What it does |
 |---|---|
@@ -18,7 +18,8 @@ One installable web app. Browse and social: **Map**, **Wall** (the feed), **AR**
 | `js/wall.js` | Wall view: the feed. Story circles per capa, the HERO show, one post per piece; double-tap to like |
 | `js/avatar.js` | Generated avatars for every handle; yours is editable on your profile |
 | `js/collection.js` | Collection view: pieces you caught, pieces still out there, pieces you made, export |
-| `js/create.js` | The create flow, from the map (tap a spot) or from AR (8 m ahead of you), with supports and 3D upload |
+| `js/studio.js` + `js/placer.js` | **The studio**, its own full-screen space: SPOT (map) → OBJECT (3D graffiti or your GLB) → PLACE (3D view with the real buildings; drag to move, height, turn, size; street and window views) → DETAILS → PUBLISH or save a draft. Edit your pieces later; *adjust on site* in AR |
+| `js/buildings.js` | OpenStreetMap buildings around a point, shared by AR walls and the studio |
 | `js/main.js` | Boot: filters, tabs, install, first route, scanned anchors (`?scan=ID`) |
 | `js/data.js` | Data model (layers, capas, anchors, supports, schema) + seed pieces |
 | `js/store.js` | Local-first storage (pieces, catches) + geo math. Swap this for a backend later |

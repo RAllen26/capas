@@ -24,7 +24,7 @@ const App = (() => {
   // ---------- pieces & filters ----------
   const capaOf = p => CAPA_ALIAS[p.capa] || p.capa || 'street';
   const piece = id => state.pieces.find(p => p.id === id);
-  const visible = () => state.pieces.filter(p => state.layersOn.has(p.layer) && (state.capa === 'all' || capaOf(p) === state.capa));
+  const visible = () => state.pieces.filter(p => !p.draft && state.layersOn.has(p.layer) && (state.capa === 'all' || capaOf(p) === state.capa));
   function reload() { state.pieces = Store.all(); emit('pieces'); checkCatches(); }
 
   // ---------- where you are ----------

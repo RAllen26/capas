@@ -3,8 +3,7 @@
 
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
-import { tagObject } from './objects.js?v=202611241322';
+import { tagObject, massingGeometry } from './objects.js?v=202611241357';
 
 const rad = d => (d * Math.PI) / 180;
 
@@ -50,12 +49,15 @@ export function createLayer(canvas) {
     const group = new THREE.Group();
     group.add(o.group);
     group.scale.setScalar(pose.scale || 1);
+    if (pose.heading != null) o.group.rotation.y = -rad(pose.heading);
     group.visible = false;
     scene.add(group);
-    items.set(id, { group, update: o.update, pose, locked: null, faceMe: true });
+    items.set(id, { group, update: o.update, pose, locked: null, faceMe: pose.heading == null });
   }
 
   const has = id => items.has(id);
+  function setAltitude(id, m) { const it = items.get(id); if (it) it.pose = { ...it.pose, altitude: m }; }
+  function remove(id) { const it = items.get(id); if (it) { scene.remove(it.group); items.delete(id); } }
 
   // bearing: degrees from north; dist: meters.
   function place(id, bearing, dist, locked) {
@@ -118,19 +120,8 @@ export function createLayer(canvas) {
   function setWalls(footprints) {
     walls.children.forEach(m => m.geometry.dispose());
     walls.clear();
-    const geos = [];
-    for (const b of footprints) {
-      if (b.pts.length < 3) continue;
-      const shape = new THREE.Shape(b.pts.map(([x, y]) => new THREE.Vector2(x, y)));
-      const g = new THREE.ExtrudeGeometry(shape, { depth: b.h, bevelEnabled: false });
-      g.rotateX(-Math.PI / 2);   // shape (east, north) -> (x, -z); extrusion -> up
-      g.deleteAttribute('uv'); g.deleteAttribute('normal');
-      geos.push(g);
-    }
-    if (!geos.length) return 0;
-    const merged = mergeGeometries(geos);
-    geos.forEach(g => g.dispose());
-    merged.computeVertexNormals();
+    const merged = massingGeometry(footprints);
+    if (!merged) return 0;
     const mesh = new THREE.Mesh(merged, massing ? massMat : wallMat);
     mesh.renderOrder = massing ? 1 : -1;   // invisible walls: depth first, so pieces behind are cut
     const edges = new THREE.LineSegments(new THREE.EdgesGeometry(merged, 30), edgeMat);
@@ -165,5 +156,5 @@ export function createLayer(canvas) {
     renderer.render(scene, camera);
   }
 
-  return { add, addTag, has, place, hideAll, setView, project, resize, render, setWalls, setWallsOffset, setWallMode, setEye, setMassing };
+  return { add, addTag, has, remove, setAltitude, place, hideAll, setView, project, resize, render, setWalls, setWallsOffset, setWallMode, setEye, setMassing };
 }

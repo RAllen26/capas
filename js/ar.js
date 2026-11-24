@@ -19,6 +19,7 @@ const ARView = (() => {
   const s = {
     started: false, running: false,
     heading: 0, pitch: 0, roll: 0, targetHeading: 0, targetPitch: 0, targetRoll: 0,
+    adjust: null,
     rel: null, compass: null, offset: null, offsetN: 0, relN: 0, nudge: 0, origin: null,
     sensors: false, camera: false,
     mode: 'ghost', canLive: false, forceGhost: false, layoutKey: '',
@@ -42,7 +43,7 @@ const ARView = (() => {
     if (threeLoading) return;
     threeLoading = true;
     status3d('LOADING');
-    import('./three-layer.js?v=202611241322').then(m => {
+    import('./three-layer.js?v=202611241357').then(m => {
       three = m.createLayer($('#ar-gl'));
       resize();
       applyWalls();
@@ -55,8 +56,9 @@ const ARView = (() => {
     const jobs = App.state.pieces.filter(p => !three.has(p.id) && !loading.has(p.id)).map(p => {
       const md = modelOf(p);
       loading.add(p.id);
-      const job = md ? Media.url(md.src).then(u => three.add(p.id, u, md.pose)) : Promise.reject();
-      return job.catch(() => three.addTag(p.id, p, { altitude: 0.4, ...(md?.pose ? { scale: md.pose.scale } : {}) }))
+      const pose = { ...(md?.pose || {}), ...(p.pose || {}) };
+      const job = md ? Media.url(md.src).then(u => three.add(p.id, u, pose)) : Promise.reject();
+      return job.catch(() => three.addTag(p.id, p, { altitude: 0.4, ...pose }))
         .finally(() => loading.delete(p.id));
     });
     if (!jobs.length) return;
@@ -84,31 +86,8 @@ const ARView = (() => {
   const wallCache = new Map();
   const eye = () => walls.floor * 3 + 1.6;
 
-  const local = (c, p) => [(p.lng - c.lng) * Math.cos(rad(c.lat)) * 111320, (p.lat - c.lat) * 110540];
-  function heightOf(t) {
-    const h = parseFloat(t.height);
-    if (h > 0) return h;
-    const lv = parseFloat(t['building:levels']);
-    if (lv > 0) return lv * 3.2 + (parseFloat(t['roof:levels']) || 0) * 2;
-    return t.building === 'house' || t.building === 'garage' || t.building === 'shed' ? 6 : 9;
-  }
-
-  async function fetchWalls(center) {
-    const q = `[out:json][timeout:20];way["building"](around:${WALL_R},${center.lat},${center.lng});out tags geom qt;`;
-    const hosts = ['https://overpass-api.de/api/interpreter', 'https://overpass.kumi.systems/api/interpreter', 'https://overpass.private.coffee/api/interpreter'];
-    for (const host of [...hosts, hosts[0]]) {   // the main server often says "busy": try it again at the end
-      try {
-        const r = await fetch(host, { method: 'POST', body: new URLSearchParams({ data: q }), signal: AbortSignal.timeout(20000) });
-        if (!r.ok) continue;
-        const els = (await r.json()).elements || [];
-        return els.filter(e => e.geometry?.length > 3).map(e => ({
-          pts: e.geometry.slice(0, -1).map(g => local(center, { lat: g.lat, lng: g.lon })),
-          h: heightOf(e.tags || {}),
-        }));
-      } catch { /* try the next server */ }
-    }
-    throw new Error('no map server');
-  }
+  const local = Buildings.local;
+  const fetchWalls = center => Buildings.around(center, WALL_R);
 
   function updateWalls(origin) {
     if (!three || !origin || walls.mode === 'off') return;
@@ -198,6 +177,7 @@ const ARView = (() => {
 
   // Leaving the view frees the camera and stops drawing.
   function leave() {
+    s.adjust = null; $('#ar-adjust').hidden = true;
     s.running = false;
     cancelAnimationFrame(raf);
     stream?.getTracks().forEach(t => t.stop());
@@ -325,6 +305,44 @@ const ARView = (() => {
     if (focus) s.placements.unshift({ p: focus, ghost: true, unlocked: true, bearing: s.heading, dist: 9 });
   }
 
+  // ---------- adjust on site: put your piece where it really belongs, by eye ----------
+  function adjust(id) {
+    const p = App.piece(id);
+    if (!p?.local) return;
+    const begin = () => {
+      const me = s.origin || App.state.me;
+      if (!me) return setTimeout(begin, 500);   // wait for GPS
+      const pose = { altitude: 0.4, ...(Media.list(p).find(x => x.type === 'model')?.pose || {}), ...(p.pose || {}) };
+      s.adjust = { id, bearing: Geo.bearing(me, p.location), dist: Math.max(2, Geo.distance(me, p.location)), alt: pose.altitude };
+      // Far away? Bring it to where you can see it, a few meters ahead.
+      if (s.adjust.dist > 300) { s.adjust.dist = 12; s.adjust.bearing = s.heading; }
+      $('#adj-alt').value = s.adjust.alt;
+      $('#o-adj').textContent = s.adjust.alt + ' m';
+      $('#ar-adjust').hidden = false;
+      App.toast('Drag your piece onto its real spot, then save.');
+    };
+    begin();
+  }
+  function endAdjust() { s.adjust = null; $('#ar-adjust').hidden = true; }
+  $('#adj-alt').addEventListener('input', e => { if (s.adjust) { s.adjust.alt = +e.target.value; $('#o-adj').textContent = s.adjust.alt + ' m'; } });
+  $('#adj-cancel').onclick = endAdjust;
+  $('#adj-save').onclick = () => {
+    const a = s.adjust, p = a && App.piece(a.id), me = s.origin || App.state.me;
+    if (!p || !me) return endAdjust();
+    const at = Geo.offset(me, a.bearing, a.dist);
+    const md = (p.supports || []).find(x => x.type === 'model');
+    const pose = { altitude: 0.4, heading: null, scale: 1, ...(md?.pose || {}), ...(p.pose || {}), altitude: a.alt };
+    const next = { ...p, location: { ...p.location, lat: +at.lat.toFixed(6), lng: +at.lng.toFixed(6) }, pose };
+    delete next.local;
+    Store.put(next);
+    forget(p.id);
+    Thumbs.forget(p.id);
+    endAdjust();
+    App.reload();
+    App.toast('Saved where you see it.');
+  };
+  function forget(id) { three?.remove(id); }
+
   $('#hud-mode').addEventListener('click', () => { s.forceGhost = !s.forceGhost; place(); });
 
   // ---------- drag to look (desktop / no sensors), tap to open ----------
@@ -335,6 +353,12 @@ const ARView = (() => {
     const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
     drag.moved += Math.abs(dx) + Math.abs(dy);
     drag.x = e.clientX; drag.y = e.clientY;
+    if (s.adjust) {
+      // Adjusting your piece: sideways moves it around you, up/down pushes it farther or nearer.
+      s.adjust.bearing = (s.adjust.bearing + dx * (H_FOV / innerWidth) + 360) % 360;
+      s.adjust.dist = Math.max(2, Math.min(3000, s.adjust.dist * Math.exp(-dy * 0.006)));
+      return;
+    }
     if (s.sensors) {
       // Line it up: drag sideways to turn the whole layer until a piece sits on its building.
       s.nudge = wrap(s.nudge - dx * (H_FOV / innerWidth));
@@ -403,12 +427,15 @@ const ARView = (() => {
     let offscreenFocus = null;
 
     sorted.forEach((pl, i) => {
+      const adj = s.adjust?.id === pl.p.id;
+      if (adj) pl = { ...pl, bearing: s.adjust.bearing, dist: s.adjust.dist, unlocked: true };
       const rel = wrap(pl.bearing - s.heading);
       if (Math.abs(rel) > H_FOV / 2 + 15) {
         if (pl.p.id === s.selected) offscreenFocus = rel;
         return;
       }
       if (three?.has(pl.p.id)) {
+        if (adj) three.setAltitude(pl.p.id, s.adjust.alt);
         three.place(pl.p.id, pl.bearing, pl.dist, !pl.unlocked && !pl.p.seenFrom);
         let r = three.project(pl.p.id, W, H);
         if (r) {
@@ -558,6 +585,7 @@ const ARView = (() => {
     enter, leave,
     // The spot a few meters in front of you, where a piece created in AR lands. Null without GPS.
     ahead: () => App.state.me ? Geo.offset(App.state.me, s.heading, AHEAD) : null,
+    adjust, forget,
     select(id) { s.selected = id; s.forceGhost = false; place(); },
     get started() { return s.started; },
   };

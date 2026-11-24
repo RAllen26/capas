@@ -23,6 +23,8 @@ const Store = (() => {
     all: () => [...SEED_PIECES, ...readLocal().map(p => ({ ...p, local: true }))],
     get: id => [...SEED_PIECES, ...readLocal()].find(p => p.id === id),
     add(piece) { const list = readLocal(); list.push(piece); return writeLocal(list); },
+    // Add or replace (editing your own piece keeps its id).
+    put(piece) { const list = readLocal().filter(p => p.id !== piece.id); list.push(piece); return writeLocal(list); },
     remove(id) { return writeLocal(readLocal().filter(p => p.id !== id)); },
     exportLocal: () => JSON.stringify(readLocal(), null, 2),
 

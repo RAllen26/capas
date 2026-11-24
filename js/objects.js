@@ -4,6 +4,30 @@
 // signal (the tag with pulsing bars above it). Real-world size: about 6 m wide, standing on the ground.
 
 import * as THREE from 'three';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+
+// Building footprints [{ pts: [[east, north], ...], h }] → one merged extruded geometry (x east, y up, -z north).
+export function massingGeometry(footprints) {
+  const geos = [];
+  for (const b of footprints) {
+    if (b.pts.length < 3) continue;
+    const g = new THREE.ExtrudeGeometry(new THREE.Shape(b.pts.map(([x, y]) => new THREE.Vector2(x, y))), { depth: b.h, bevelEnabled: false });
+    g.rotateX(-Math.PI / 2);
+    g.deleteAttribute('uv');
+    geos.push(g);
+  }
+  if (!geos.length) return null;
+  const merged = mergeGeometries(geos);
+  geos.forEach(g => g.dispose());
+  merged.computeVertexNormals();
+  return merged;
+}
+
+// Where and how big an object sits: the piece's own pose, else its model support's, else a tag on the ground.
+export function poseOf(piece) {
+  const md = (piece.supports || []).find(s => s.type === 'model');
+  return { altitude: 0.4, heading: null, scale: 1, ...(md?.pose || {}), ...(piece.pose || {}) };
+}
 
 const FONT = '"Rubik Mono One", "Arial Black", sans-serif';
 

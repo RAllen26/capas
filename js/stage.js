@@ -5,7 +5,7 @@
 
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { tagObject } from './objects.js?v=202611241322';
+import { tagObject } from './objects.js?v=202611241357';
 
 const fontReady = document.fonts ? document.fonts.load('40px "Rubik Mono One"').catch(() => {}) : Promise.resolve();
 const canvas = document.createElement('canvas');

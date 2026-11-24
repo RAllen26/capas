@@ -12,7 +12,7 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <script src="js/theme.js?v=202611241322"></script>
+  <script src="js/theme.js?v=202611241357"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <script type="importmap">
     { "imports": {
@@ -21,9 +21,9 @@
     } }
   </script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-  <link rel="stylesheet" href="css/theme.css?v=202611241322">
-  <link rel="stylesheet" href="css/style.css?v=202611241322">
-  <link rel="stylesheet" href="css/ar.css?v=202611241322">
+  <link rel="stylesheet" href="css/theme.css?v=202611241357">
+  <link rel="stylesheet" href="css/style.css?v=202611241357">
+  <link rel="stylesheet" href="css/ar.css?v=202611241357">
 </head>
 <body>
   <header class="bar">
@@ -66,6 +66,11 @@
       <button id="hud-walls" type="button" aria-label="How buildings hide pieces">WALLS</button>
       <button id="hud-eye" type="button" aria-label="How high you are">EYE</button>
     </div>
+    <div class="ar-adjust" id="ar-adjust" hidden>
+      <p><b>ADJUST HERE</b> · drag ↔ around you · ↕ nearer / farther</p>
+      <label class="st-range">HEIGHT <input type="range" id="adj-alt" min="0" max="120" step="0.5"><output id="o-adj"></output></label>
+      <div><button class="btn" type="button" id="adj-cancel">CANCEL</button><button class="btn btn-accent" type="button" id="adj-save">SAVE WHERE I SEE IT</button></div>
+    </div>
     <div class="radar" id="radar"><canvas id="radar-c" width="160" height="160"></canvas></div>
     <div class="gate" id="gate">
       <div class="gate-box">
@@ -102,45 +107,96 @@
   <aside class="sheet" id="sheet" aria-label="Piece" hidden></aside>
   <div class="toast" id="toast" role="status" hidden></div>
 
-  <dialog id="drop-dialog">
-    <form method="dialog" id="drop-form">
-      <h2>PASTE A PIECE</h2>
-      <p class="small">At <span id="drop-where"></span></p>
-      <div class="drop-grid">
-        <div>
-          <canvas id="drop-preview" width="320" height="320"></canvas>
-          <button type="button" class="btn small-btn" id="drop-reroll">↻ REROLL</button>
+  <!-- STUDIO: making a piece is its own experience -->
+  <section class="studio" id="studio" hidden aria-label="Studio">
+    <header class="st-head">
+      <button class="x" type="button" id="st-close" aria-label="Close the studio">×</button>
+      <ol class="st-steps" id="st-steps">
+        <li data-step="spot">SPOT</li><li data-step="object">OBJECT</li><li data-step="place">PLACE</li><li data-step="details">DETAILS</li><li data-step="publish">PUBLISH</li>
+      </ol>
+    </header>
+    <div class="st-stage">
+      <div id="st-map"></div>
+      <canvas id="st-gl"></canvas>
+      <canvas id="st-turn" width="560" height="560"></canvas>
+      <div class="st-viewbar" id="st-viewbar">
+        <button type="button" class="btn on" data-mode="move">✥ MOVE</button>
+        <button type="button" class="btn" data-mode="orbit">⟲ ORBIT</button>
+        <button type="button" class="btn" data-view="fit">⌖ FIT</button>
+        <button type="button" class="btn" data-view="street">STREET</button>
+        <button type="button" class="btn" data-view="window">WINDOW <span id="st-floor">5</span></button>
+        <span class="st-city" id="st-city"></span>
+      </div>
+    </div>
+    <form class="st-panel" id="st-form" autocomplete="off">
+      <div class="st-step" data-step="spot">
+        <h2>WHERE DOES IT LIVE?</h2>
+        <p>Tap the map to drop it. <button type="button" class="link" id="st-here">use where I stand</button></p>
+        <p class="small" id="st-where">No spot yet.</p>
+      </div>
+
+      <div class="st-step" data-step="object">
+        <h2>WHAT IS IT?</h2>
+        <nav class="seg" id="st-kind">
+          <button type="button" data-kind="tag">3D GRAFFITI</button>
+          <button type="button" data-kind="model">UPLOAD 3D</button>
+        </nav>
+        <div class="st-kind" data-kind-panel="tag">
+          <label>Your tag <input name="glyph" maxlength="14" placeholder="AQUÍ"></label>
+          <p class="st-label">STYLE</p><div class="st-chips" id="st-styles"></div>
+          <p class="st-label">COLORS</p><div class="palettes" id="st-palettes"></div>
+          <button type="button" class="btn small-btn" id="st-reroll">↻ REROLL DRIPS</button>
         </div>
-        <div class="fields">
-          <label>Title <input name="title" required maxlength="60" placeholder="Untitled wall"></label>
-          <label>Artist handle <input name="artist" required maxlength="30" placeholder="@you"></label>
-          <label>Glyph (text painted on it) <input name="glyph" maxlength="14" placeholder="AQUÍ"></label>
-          <label>Layer <select name="layer"></select></label>
-          <label>Capa (whose it is) <select name="capa"></select></label>
-          <label>Style <select name="style"></select></label>
-          <label>Anchor <select name="anchor"></select></label>
-          <label>Activation radius (m) <input name="radius" type="number" min="10" max="500" value="50"></label>
-          <label>Statement <textarea name="note" rows="2" maxlength="200"></textarea></label>
-          <label>License
-            <select name="license">
-              <option>CC-BY-SA-4.0</option><option>CC-BY-4.0</option><option>CC0-1.0</option>
-            </select>
-          </label>
+        <div class="st-kind" data-kind-panel="model">
+          <label>GLB file <input type="file" id="st-file" accept=".glb,model/gltf-binary"></label>
+          <label>…or a link <input id="st-url" placeholder="https://…/piece.glb"></label>
+          <p class="small">Blender: File → Export → glTF 2.0, format GLB. <button type="button" class="link" id="st-sample">Use the sample totem</button></p>
         </div>
       </div>
-      <div class="palettes" id="drop-palettes"></div>
-      <fieldset class="support-editor">
-        <legend>Supports: the media this piece lives in</legend>
-        <div id="drop-supports"></div>
-        <div class="support-add" id="support-add"></div>
-        <p class="small">Uploaded files stay on this device until the backend exists. Links work everywhere.</p>
-      </fieldset>
-      <menu>
-        <button class="btn" value="cancel" formnovalidate>CANCEL</button>
-        <button class="btn btn-primary" value="ok">PASTE IT</button>
-      </menu>
+
+      <div class="st-step" data-step="place">
+        <h2>PLACE IT</h2>
+        <p class="small">Drag on the ground to move it; ORBIT to look around; STREET and WINDOW to see it like people will. <b id="st-moved"></b></p>
+        <label class="st-range">HEIGHT <input type="range" name="alt" min="0" max="120" step="0.5" value="0.4"><output id="o-alt"></output></label>
+        <label class="st-range">TURN <input type="range" name="head" min="0" max="359" step="1" value="0"><output id="o-head"></output></label>
+        <label class="st-range">SIZE <input type="range" name="size" min="0" max="100" step="1" value="40"><output id="o-size"></output></label>
+      </div>
+
+      <div class="st-step" data-step="details">
+        <h2>DETAILS</h2>
+        <label>Title <input name="title" maxlength="60" placeholder="Untitled"></label>
+        <label>Artist <input name="artist" maxlength="30" placeholder="@you"></label>
+        <p class="st-label">LAYER</p><div class="st-chips" id="st-layers"></div>
+        <p class="st-label">WHO SEES IT</p><div class="st-chips" id="st-capas"></div>
+        <label class="st-range">OPENS WITHIN <input type="range" name="radius" min="10" max="700" step="5" value="50"><output id="o-radius"></output></label>
+        <label class="st-range">SEEN FROM <input type="range" name="seen" min="0" max="8000" step="250" value="0"><output id="o-seen"></output></label>
+        <label>Anchor <select name="anchor"></select></label>
+        <label>Statement <textarea name="note" rows="2" maxlength="200"></textarea></label>
+        <label>License <select name="license"><option>CC-BY-SA-4.0</option><option>CC-BY-4.0</option><option>CC0-1.0</option></select></label>
+        <fieldset class="support-editor">
+          <legend>More supports: what else this piece lives in</legend>
+          <div id="drop-supports"></div>
+          <div class="support-add" id="support-add"></div>
+        </fieldset>
+      </div>
+
+      <div class="st-step" data-step="publish">
+        <h2>READY?</h2>
+        <dl class="kv" id="st-summary"></dl>
+        <div class="st-actions">
+          <button type="button" class="btn" id="st-draft">SAVE DRAFT</button>
+          <button type="button" class="btn btn-accent" id="st-publish">PUBLISH</button>
+        </div>
+        <button type="button" class="btn" id="st-onsite">PUBLISH + ADJUST ON SITE ▲</button>
+        <p class="small">No servers yet: pieces live on this device. Export them from your profile to add them to the open repo.</p>
+      </div>
+
+      <footer class="st-nav">
+        <button type="button" class="btn" id="st-back">BACK</button>
+        <button type="button" class="btn btn-primary" id="st-next">NEXT</button>
+      </footer>
     </form>
-  </dialog>
+  </section>
 
   <dialog id="qr-dialog">
     <div class="qr-sheet">
@@ -173,19 +229,20 @@
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-  <script src="js/data.js?v=202611241322"></script>
-  <script src="js/art.js?v=202611241322"></script>
-  <script src="js/thumbs.js?v=202611241322"></script>
-  <script src="js/avatar.js?v=202611241322"></script>
-  <script src="js/store.js?v=202611241322"></script>
-  <script src="js/media.js?v=202611241322"></script>
-  <script src="js/core.js?v=202611241322"></script>
-  <script src="js/card.js?v=202611241322"></script>
-  <script src="js/map.js?v=202611241322"></script>
-  <script src="js/ar.js?v=202611241322"></script>
-  <script src="js/wall.js?v=202611241322"></script>
-  <script src="js/collection.js?v=202611241322"></script>
-  <script src="js/create.js?v=202611241322"></script>
-  <script src="js/main.js?v=202611241322"></script>
+  <script src="js/data.js?v=202611241357"></script>
+  <script src="js/art.js?v=202611241357"></script>
+  <script src="js/thumbs.js?v=202611241357"></script>
+  <script src="js/avatar.js?v=202611241357"></script>
+  <script src="js/buildings.js?v=202611241357"></script>
+  <script src="js/store.js?v=202611241357"></script>
+  <script src="js/media.js?v=202611241357"></script>
+  <script src="js/core.js?v=202611241357"></script>
+  <script src="js/card.js?v=202611241357"></script>
+  <script src="js/map.js?v=202611241357"></script>
+  <script src="js/ar.js?v=202611241357"></script>
+  <script src="js/wall.js?v=202611241357"></script>
+  <script src="js/collection.js?v=202611241357"></script>
+  <script src="js/studio.js?v=202611241357"></script>
+  <script src="js/main.js?v=202611241357"></script>
 </body>
 </html>

@@ -34,7 +34,7 @@ const CollectionView = (() => {
         : '<p class="empty">Nothing caught yet. Walk inside a piece\'s radius with the app open, or scan its sticker.</p>',
       out: missing.length ? missing.map(p => { const d = App.distanceTo(p); return tile(p, d != null ? Geo.fmt(d) : '', true); }).join('')
         : '<p class="empty">You caught everything in these filters.</p>',
-      made: mine.length ? mine.map(p => tile(p, CAPAS[App.capaOf(p)].label)).join('')
+      made: mine.length ? mine.map(p => tile(p, p.draft ? 'DRAFT' : CAPAS[App.capaOf(p)].label)).join('')
         : '<p class="empty">None yet. Tap + CREATE to paste your first piece.</p>',
     };
 
