@@ -8,8 +8,11 @@ for name in ['index.html', 'theme.html']:
     p = root / name
     s = re.sub(r'((?:src|href)="(?:js|css)/[^"?]+)(\?v=[^"]*)?"', rf'\1?v={v}"', p.read_text())
     p.write_text(s)
-p = root / 'js/ar.js'
-p.write_text(re.sub(r"three-layer\.js(\?v=[^']*)?'", f"three-layer.js?v={v}'", p.read_text()))
+# Module imports between our own files ('./three-layer.js', './objects.js', ...) get the same stamp.
+for p in (root / 'js').glob('*.js'):
+    s = p.read_text()
+    t = re.sub(r"('\./[\w-]+\.js)(\?v=[^']*)?'", rf"\1?v={v}'", s)
+    if t != s: p.write_text(t)
 p = root / 'sw.js'
 p.write_text(re.sub(r"const VERSION = '[^']*';", f"const VERSION = '{v}';", p.read_text()))
 print('version', v)

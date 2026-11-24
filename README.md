@@ -23,7 +23,9 @@ One installable web app. Browse and social: **Map**, **Wall** (the feed), **AR**
 | `js/data.js` | Data model (layers, capas, anchors, supports, schema) + seed pieces |
 | `js/store.js` | Local-first storage (pieces, catches) + geo math. Swap this for a backend later |
 | `js/media.js` + `assets/` | Supports: renders each piece's media and keeps uploads on the device |
-| `js/art.js` | Procedural artworks, so the gallery runs with zero uploaded media |
+| `js/objects.js` | **3D graffiti**: any piece without its own model becomes a voxel tag of its glyph (block shadow, drips, spray), in four styles |
+| `js/stage.js` + `js/thumbs.js` | One shared 3D renderer for object stills (feed, collection, map) and the live turntable (feed, card, create preview) |
+| `js/art.js` | The old flat artworks, kept only as a fallback when a phone has no WebGL |
 | `css/theme.css` + `js/theme.js` | **The whole visual identity**: palette, roles, fonts, borders, corners, shadows, map mood, brand name |
 | `manifest.webmanifest` + `sw.js` | Installable app (PWA): home-screen icon, full-screen, opens on a weak signal |
 | `ar.html` | Forwards old links and printed stickers (`ar.html?piece=ID`) into the app |

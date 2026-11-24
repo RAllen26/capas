@@ -29,7 +29,7 @@ const WallView = (() => {
         const ps = all.filter(p => App.capaOf(p) === k).sort((a, b) => String(b.created).localeCompare(String(a.created)));
         const face = ps[0];
         return `<button class="story ${cur === k ? 'on' : ''} ${ps.length ? '' : 'none'}" data-capa="${k}" title="${esc(c.desc)}">
-          <span class="story-ring">${face ? `<img alt="" data-cover="${face.id}" src="${Art.toDataURL(face, 120)}">` : '<i>+</i>'}</span>
+          <span class="story-ring">${face ? Thumbs.img(face, 140) : '<i>+</i>'}</span>
           <b>${c.label}</b><small>${ps.length}</small>
         </button>`;
       }).join('')}
@@ -45,7 +45,7 @@ const WallView = (() => {
       <p class="tag">HERO · NOW SHOWING</p>
       <h2>CAPAS FIELD TEST</h2>
       <p>${ps.length} pieces across the city${near != null ? ` · nearest ${Geo.fmt(near)}` : ''} · ${caught} caught</p>
-      <div class="hero-strip">${ps.slice(0, 6).map(p => `<img alt="${esc(p.title)}" data-open="${p.id}" data-cover="${p.id}" src="${Art.toDataURL(p, 120)}">`).join('')}</div>
+      <div class="hero-strip">${ps.slice(0, 8).map(p => Thumbs.img(p, 160, `data-open="${p.id}"`)).join('')}</div>
     </section>`;
   }
 
@@ -61,7 +61,8 @@ const WallView = (() => {
         <span class="tag">${capa.label}</span>
       </header>
       <div class="post-art" data-act="art">
-        <img alt="${esc(p.title)}" data-cover="${p.id}" src="${Art.toDataURL(p, 480)}">
+        ${Thumbs.img(p, 560)}
+        <canvas class="live" width="560" height="560" hidden></canvas>
         ${sup ? `<span class="post-sup">${sup}</span>` : ''}
         <span class="burst" aria-hidden="true">♥</span>
       </div>
@@ -87,10 +88,30 @@ const WallView = (() => {
     el.innerHTML = stories(all) + hero(all) + (feed.length
       ? feed.map(p => post(p, !!l[p.id])).join('')
       : `<p class="empty">Nothing on the wall here. ${App.state.capa === 'me' ? 'Tap + CREATE to paste your first piece.' : 'Turn a layer back on or pick another capa.'}</p>`);
-    el.querySelectorAll('img[data-cover]').forEach(img => {
-      const p = App.piece(img.dataset.cover);
-      if (p) Media.cover(p).then(c => { if (c) img.src = c.src; });
-    });
+    Thumbs.fill(el);
+    el.querySelectorAll('.post-art').forEach(a => seen.observe(a));
+  }
+
+  // The post most in view turns slowly; the rest are stills.
+  let spinning = null;
+  const ratios = new Map();
+  const seen = new IntersectionObserver(entries => {
+    entries.forEach(e => ratios.set(e.target, e.intersectionRatio));
+    let best = null, top = 0.55;
+    ratios.forEach((r, a) => { if (r > top && a.isConnected) { best = a; top = r; } });
+    if (best === spinning?.art) return;
+    stopSpin();
+    if (!best || !active) return;
+    const c = best.querySelector('canvas.live');
+    c.hidden = false;
+    spinning = { art: best, h: Thumbs.live(c, App.piece(best.closest('.post').dataset.id)) };
+  }, { threshold: [0, 0.3, 0.55, 0.75, 1] });
+  function stopSpin() {
+    if (!spinning) return;
+    spinning.h.stop();
+    const c = spinning.art.querySelector('canvas.live');
+    if (c) c.hidden = true;
+    spinning = null;
   }
 
   function setLike(art, on) {
@@ -144,7 +165,7 @@ const WallView = (() => {
 
   return {
     enter() { active = true; render(); $('#view-wall').scrollTop = 0; },
-    leave() { active = false; },
+    leave() { active = false; stopSpin(); },
   };
 })();
 

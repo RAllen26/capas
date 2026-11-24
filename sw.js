@@ -3,13 +3,13 @@
 // Libraries and fonts from CDNs: cached copy first, they never change at a given version.
 // Map tiles are left to the browser.
 
-const VERSION = '202611241318';
+const VERSION = '202611241322';
 const CACHE = 'capas-' + VERSION;
 const SHELL = [
   './', 'index.html', 'manifest.webmanifest',
   'css/theme.css', 'css/style.css', 'css/ar.css',
   'js/theme.js', 'js/data.js', 'js/art.js', 'js/store.js', 'js/media.js', 'js/core.js', 'js/card.js',
-  'js/map.js', 'js/ar.js', 'js/avatar.js', 'js/wall.js', 'js/collection.js', 'js/create.js', 'js/main.js', 'js/three-layer.js',
+  'js/map.js', 'js/ar.js', 'js/thumbs.js', 'js/stage.js', 'js/objects.js', 'js/avatar.js', 'js/wall.js', 'js/collection.js', 'js/create.js', 'js/main.js', 'js/three-layer.js',
   'assets/icon-192.png',
 ];
 const CDNS = ['cdnjs.cloudflare.com', 'cdn.jsdelivr.net', 'fonts.googleapis.com', 'fonts.gstatic.com'];

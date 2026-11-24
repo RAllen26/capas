@@ -57,7 +57,7 @@ nav { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
   box-shadow: var(--shadow-sm); transform: rotate(var(--rot, 0deg)); transition: transform .15s;
   position: relative;
 }
-.pin img { width: 100%; height: 100%; display: block; border-radius: calc(var(--radius) - var(--border-w)); }
+.pin img { width: 100%; height: 100%; display: block; background: var(--color-surface); border-radius: calc(var(--radius) - var(--border-w)); }
 .pin::after {
   content: ""; position: absolute; left: 50%; bottom: -12px; width: 3px; height: 10px;
   background: var(--c, var(--color-primary)); transform: translateX(-50%);
@@ -360,3 +360,9 @@ body::before {
 .by { display: flex; align-items: center; gap: 8px; margin: 2px 0 4px; }
 .by .avatar { width: 26px; height: 26px; }
 .face { background: none; border: 0; padding: 0; cursor: pointer; }
+
+/* ---------- objects: stills with a live turntable on top ---------- */
+.sheet-art, .post-art { position: relative; background: var(--grid-image, none) 0 0 / 20px 20px, color-mix(in srgb, var(--color-bg) 70%, var(--color-surface)); }
+.sheet-art canvas.live, .post-art canvas.live { position: absolute; inset: 0; width: 100%; height: 100%; }
+.sheet-art img { aspect-ratio: 1; }
+.tile, .story-ring img, .hero-strip img { background: var(--color-surface); }

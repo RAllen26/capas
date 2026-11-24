@@ -9,7 +9,7 @@ const CollectionView = (() => {
   // Profile grid: square tiles edge to edge; the caption shows on the tile only where it says something new.
   function tile(p, meta, missing) {
     return `<button class="tile ${missing ? 'missing' : ''}" data-id="${p.id}" style="--c:${LAYERS[p.layer].color}" title="${esc(p.title)}">
-      <img alt="${esc(p.title)}" src="${Art.toDataURL(p, 240)}">
+      ${Thumbs.img(p, 260)}
       ${meta ? `<span>${meta}</span>` : ''}
     </button>`;
   }
@@ -64,9 +64,7 @@ const CollectionView = (() => {
       ${tab === 'made' && mine.length ? `<p><button class="btn" id="btn-export">EXPORT MY PIECES (.json)</button></p>
         <p class="small">Pieces you make live on this device. Export them to add them to the open repo. Uploaded files stay on the device.</p>` : ''}`;
 
-    for (const p of { caught, out: missing, made: mine }[tab]) {
-      Media.cover(p).then(img => { if (img) el.querySelectorAll(`.tile[data-id="${p.id}"] img`).forEach(i => { i.src = img.src; }); });
-    }
+    Thumbs.fill(el);
   }
 
   el.addEventListener('click', e => {

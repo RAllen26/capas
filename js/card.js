@@ -2,7 +2,7 @@
 
 const Card = (() => {
   const sheet = $('#sheet');
-  let current = null;
+  let current = null, spin = null;
 
   function statusLine(p, d) {
     const c = Store.caught(p.id);
@@ -18,7 +18,7 @@ const Card = (() => {
     const layer = LAYERS[p.layer], anchor = ANCHORS[p.anchor.type], capa = CAPAS[App.capaOf(p)];
     const d = App.distanceTo(p), isOpen = App.isOpen(p), inAR = App.state.view === 'ar';
     sheet.innerHTML = `
-      <div class="sheet-art"><img alt="${esc(p.title)}" src="${Art.toDataURL(p, 512)}"><button class="x" data-act="close" aria-label="Close">×</button></div>
+      <div class="sheet-art">${Thumbs.img(p, 512)}<canvas class="live" width="512" height="512"></canvas><button class="x" data-act="close" aria-label="Close">×</button></div>
       <div class="sheet-body">
         <span class="tag" style="--c:${layer.color}" title="${layer.desc}">${layer.label}</span><span class="tag" title="${capa.desc}">${capa.label}</span><span class="tag">${anchor.label}</span>
         <h2>${esc(p.title)}</h2>
@@ -43,7 +43,9 @@ const Card = (() => {
       </div>`;
     sheet.hidden = false;
     sheet.scrollTop = 0;
-    Media.cover(p).then(img => { if (img && current === id) sheet.querySelector('.sheet-art img').src = img.src; });
+    Thumbs.fill(sheet);
+    spin?.stop();
+    spin = Thumbs.live(sheet.querySelector('.sheet-art canvas'), p);
     // The tap that opened the card counts as a gesture, so on-site sound can start right away.
     Media.render($('#sheet-supports'), p, { unlocked: isOpen }).then(() => {
       if (autoplay && isOpen && current === id) sheet.querySelector('audio')?.play().catch(() => {});
@@ -56,6 +58,7 @@ const Card = (() => {
     sheet.querySelectorAll('audio, video').forEach(m => m.pause());
     sheet.hidden = true;
     current = null;
+    spin?.stop(); spin = null;
     App.emit('card', null);
   }
 

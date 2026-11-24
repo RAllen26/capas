@@ -4,6 +4,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+import { tagObject } from './objects.js?v=202611241322';
 
 const rad = d => (d * Math.PI) / 180;
 
@@ -37,9 +38,21 @@ export function createLayer(canvas) {
       const mixer = new THREE.AnimationMixer(gltf.scene);
       gltf.animations.forEach(clip => mixer.clipAction(clip).play());
       scene.add(group);
-      items.set(id, { group, mixer, pose, locked: null });
+      items.set(id, { group, update: dt => mixer.update(dt), pose, locked: null });
       resolve();
     }, undefined, reject));
+  }
+
+  // 3D graffiti for pieces without a model. It turns to face you the first time it's placed.
+  async function addTag(id, piece, pose = {}) {
+    if (document.fonts) await document.fonts.load('40px "Rubik Mono One"').catch(() => {});
+    const o = tagObject(piece);
+    const group = new THREE.Group();
+    group.add(o.group);
+    group.scale.setScalar(pose.scale || 1);
+    group.visible = false;
+    scene.add(group);
+    items.set(id, { group, update: o.update, pose, locked: null, faceMe: true });
   }
 
   const has = id => items.has(id);
@@ -49,6 +62,7 @@ export function createLayer(canvas) {
     const it = items.get(id);
     if (!it) return;
     it.group.position.set(Math.sin(rad(bearing)) * dist, it.pose.altitude || 0, -Math.cos(rad(bearing)) * dist);
+    if (it.faceMe) { it.group.rotation.y = Math.atan2(-it.group.position.x, -it.group.position.z); it.faceMe = false; }
     it.group.visible = true;
     if (it.locked !== locked) {
       // Locked pieces show as a wireframe ghost until you're there.
@@ -137,7 +151,7 @@ export function createLayer(canvas) {
 
   function render() {
     const dt = clock.getDelta();
-    items.forEach(it => it.group.visible && it.mixer.update(dt));
+    items.forEach(it => it.group.visible && it.update(dt));
     renderer.clear();
     const useWalls = wallMode !== 'off' && walls.children.length > 0;
     if (useWalls && wallMode === 'xray' && !massing) {
@@ -151,5 +165,5 @@ export function createLayer(canvas) {
     renderer.render(scene, camera);
   }
 
-  return { add, has, place, hideAll, setView, project, resize, render, setWalls, setWallsOffset, setWallMode, setEye, setMassing };
+  return { add, addTag, has, place, hideAll, setView, project, resize, render, setWalls, setWallsOffset, setWallMode, setEye, setMassing };
 }

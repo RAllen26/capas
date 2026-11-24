@@ -26,15 +26,11 @@ const MapView = (() => {
     const rot = (Art.rng(p.id)() - 0.5) * Theme.num('--pin-tilt');
     return L.divIcon({
       className: '',
-      html: `<div class="pin ${Store.caught(p.id) ? 'caught' : ''}" style="--c:${color};--rot:${rot}deg"><img alt="" src="${Art.toDataURL(p, 108)}"></div>`,
+      html: `<div class="pin ${Store.caught(p.id) ? 'caught' : ''}" style="--c:${color};--rot:${rot}deg">${Thumbs.img(p, 120)}</div>`,
       iconSize: [54, 54], iconAnchor: [27, 66],
     });
   }
 
-  // Generated art shows first; a piece's image support replaces it once loaded.
-  function useCover(p, getImg) {
-    Media.cover(p).then(img => { const el = img && getImg(); if (el) el.src = img.src; });
-  }
 
   function render() {
     if (!map) return;
@@ -48,8 +44,8 @@ const MapView = (() => {
         radius: p.location.radius, color: LAYERS[p.layer].color, weight: 1, dashArray: '4 4', fillOpacity: 0.06, interactive: false,
       }).addTo(map);
       markers.set(p.id, { remove: () => { m.remove(); circle.remove(); }, marker: m });
-      useCover(p, () => m.getElement()?.querySelector('.pin img'));
     }
+    Thumbs.fill($('#map'));
     highlight(Card.current);
     renderList();
   }
@@ -67,12 +63,13 @@ const MapView = (() => {
     $('#list-items').innerHTML = items.map(p => {
       const d = App.distanceTo(p);
       return `<li data-id="${p.id}">
-        <img alt="" src="${Art.toDataURL(p, 88)}">
+        ${Thumbs.img(p, 96)}
         <div><b>${esc(p.title)}</b>
         <span class="meta">${esc(p.artist)} · ${LAYERS[p.layer].label}${d != null ? ' · ' + Geo.fmt(d) : ''}${Store.caught(p.id) ? ' · ● CAUGHT' : ''}</span>
         <span class="meta">${Media.icons(p)}</span></div>
       </li>`;
     }).join('') || '<li>No pieces match these filters. Turn a layer back on or pick another capa.</li>';
+    Thumbs.fill($('#list-items'));
     items.forEach(p => useCover(p, () => $(`#list-items li[data-id="${p.id}"] img`)));
   }
   $('#list-items').addEventListener('click', e => {

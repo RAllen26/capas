@@ -39,10 +39,10 @@ const ARView = (() => {
 
   function ensureThree() {
     if (three) return loadModels();
-    if (threeLoading || !App.state.pieces.some(modelOf)) return;
+    if (threeLoading) return;
     threeLoading = true;
     status3d('LOADING');
-    import('./three-layer.js?v=202611241318').then(m => {
+    import('./three-layer.js?v=202611241322').then(m => {
       three = m.createLayer($('#ar-gl'));
       resize();
       applyWalls();
@@ -51,10 +51,13 @@ const ARView = (() => {
   }
 
   function loadModels() {
-    const jobs = App.state.pieces.filter(p => modelOf(p) && !three.has(p.id) && !loading.has(p.id)).map(p => {
+    // Every piece is an object: its own model if it has one, otherwise 3D graffiti of its glyph.
+    const jobs = App.state.pieces.filter(p => !three.has(p.id) && !loading.has(p.id)).map(p => {
       const md = modelOf(p);
       loading.add(p.id);
-      return Media.url(md.src).then(u => three.add(p.id, u, md.pose)).finally(() => loading.delete(p.id));
+      const job = md ? Media.url(md.src).then(u => three.add(p.id, u, md.pose)) : Promise.reject();
+      return job.catch(() => three.addTag(p.id, p, { altitude: 0.4, ...(md?.pose ? { scale: md.pose.scale } : {}) }))
+        .finally(() => loading.delete(p.id));
     });
     if (!jobs.length) return;
     Promise.allSettled(jobs).then(r => {
@@ -414,6 +417,7 @@ const ARView = (() => {
           drawLabel(pl, r.x, r.y + r.h, r.w); s.hits.push({ pl, x: r.x, y: r.y, w: r.w, h: r.h + 30 }); }
         return;
       }
+      if (three || threeLoading) return;   // objects only; flat art is the fallback when WebGL is missing
       const size = Math.max(40, Math.min(H * 0.45, (H * 3.5) / Math.max(pl.dist, 4)));
       const x = W / 2 + f * Math.tan(rad(rel)) - size / 2;
       const y = horizon - size / 2 + Math.sin(t / 900 + i) * 5;

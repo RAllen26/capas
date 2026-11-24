@@ -57,9 +57,15 @@ const Create = (() => {
     };
   }
 
+  // The preview is the object itself: 3D graffiti of your glyph, turning. Rebuilt as you type.
+  let preview = null, previewTimer = 0;
   function drawDraft() {
-    const c = $('#drop-preview');
-    Art.draw(c.getContext('2d', { willReadFrequently: true }), draftPiece(), c.width, c.height);
+    clearTimeout(previewTimer);
+    previewTimer = setTimeout(() => {
+      const p = { ...draftPiece(), id: '__draft', supports: [] };
+      preview?.stop();
+      Thumbs.forget('__draft').then(() => { preview = Thumbs.live($('#drop-preview'), p); });
+    }, 120);
   }
 
   function renderPalettes() {
