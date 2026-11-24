@@ -42,9 +42,10 @@ const ARView = (() => {
     if (threeLoading || !App.state.pieces.some(modelOf)) return;
     threeLoading = true;
     status3d('LOADING');
-    import('./three-layer.js?v=202611181747').then(m => {
+    import('./three-layer.js?v=202611241313').then(m => {
       three = m.createLayer($('#ar-gl'));
       resize();
+      applyWalls();
       loadModels();
     }).catch(e => status3d('OFF · ' + String(e?.message || e).slice(0, 60).toUpperCase()));
   }
@@ -69,6 +70,87 @@ const ARView = (() => {
     covers.set(p.id, null);
     Media.cover(p).then(img => img && covers.set(p.id, img));
   }
+
+  // ---------- walls: real buildings from OpenStreetMap hide what's behind them ----------
+  // Fetched around a point rounded to a ~200 m grid (so only a rough area leaves the phone), cached per cell.
+  const WALL_R = 500, CELL = 0.002;
+  const FLOORS = [0, 1, 2, 3, 5, 8, 12];
+  const pref = (k, d) => { try { return localStorage.getItem(k) ?? d; } catch { return d; } };
+  const keep = (k, v) => { try { localStorage.setItem(k, v); } catch { /* private mode */ } };
+  const walls = { mode: pref('capas.walls', 'xray'), floor: +pref('capas.floor', 0), cell: null, center: null, count: 0, state: '' };
+  const wallCache = new Map();
+  const eye = () => walls.floor * 3 + 1.6;
+
+  const local = (c, p) => [(p.lng - c.lng) * Math.cos(rad(c.lat)) * 111320, (p.lat - c.lat) * 110540];
+  function heightOf(t) {
+    const h = parseFloat(t.height);
+    if (h > 0) return h;
+    const lv = parseFloat(t['building:levels']);
+    if (lv > 0) return lv * 3.2 + (parseFloat(t['roof:levels']) || 0) * 2;
+    return t.building === 'house' || t.building === 'garage' || t.building === 'shed' ? 6 : 9;
+  }
+
+  async function fetchWalls(center) {
+    const q = `[out:json][timeout:20];way["building"](around:${WALL_R},${center.lat},${center.lng});out tags geom qt;`;
+    const hosts = ['https://overpass-api.de/api/interpreter', 'https://overpass.kumi.systems/api/interpreter', 'https://overpass.private.coffee/api/interpreter'];
+    for (const host of [...hosts, hosts[0]]) {   // the main server often says "busy": try it again at the end
+      try {
+        const r = await fetch(host, { method: 'POST', body: new URLSearchParams({ data: q }), signal: AbortSignal.timeout(20000) });
+        if (!r.ok) continue;
+        const els = (await r.json()).elements || [];
+        return els.filter(e => e.geometry?.length > 3).map(e => ({
+          pts: e.geometry.slice(0, -1).map(g => local(center, { lat: g.lat, lng: g.lon })),
+          h: heightOf(e.tags || {}),
+        }));
+      } catch { /* try the next server */ }
+    }
+    throw new Error('no map server');
+  }
+
+  function updateWalls(origin) {
+    if (!three || !origin || walls.mode === 'off') return;
+    const cell = `${Math.round(origin.lat / CELL)},${Math.round(origin.lng / CELL)}`;
+    if (cell !== walls.cell) {
+      walls.cell = cell;
+      const center = { lat: Math.round(origin.lat / CELL) * CELL, lng: Math.round(origin.lng / CELL) * CELL };
+      walls.state = 'LOADING';
+      const job = wallCache.get(cell) || fetchWalls(center);
+      wallCache.set(cell, job);
+      job.then(list => {
+        if (walls.cell !== cell) return;
+        walls.center = center;
+        walls.count = three.setWalls(list);
+        walls.state = '';
+        updateWalls(s.origin);
+      }).catch(() => {
+        // Servers busy: say so, and try again in a minute.
+        wallCache.delete(cell);
+        if (walls.cell !== cell) return;
+        walls.state = 'NO MAP';
+        setTimeout(() => { if (walls.cell === cell) { walls.cell = null; updateWalls(s.origin); } }, 60000);
+      });
+    }
+    if (walls.center) {
+      const [e, n] = local(origin, walls.center);
+      three.setWallsOffset(e, n);
+    }
+  }
+
+  function applyWalls() {
+    three?.setWallMode(walls.mode);
+    three?.setEye(eye());
+    updateWalls(s.origin);
+  }
+  $('#hud-walls').addEventListener('click', () => {
+    walls.mode = { xray: 'hide', hide: 'off', off: 'xray' }[walls.mode] || 'xray';
+    keep('capas.walls', walls.mode);
+    applyWalls();
+  });
+  $('#hud-eye').addEventListener('click', () => {
+    walls.floor = FLOORS[(FLOORS.indexOf(walls.floor) + 1) % FLOORS.length];
+    keep('capas.floor', walls.floor);
+    applyWalls();
+  });
 
   // ---------- start / stop ----------
   function enter(focusId) {
@@ -202,6 +284,7 @@ const ARView = (() => {
   // ---------- placement: where each piece lives relative to you ----------
   function place() {
     const me = steadyOrigin(App.state.me, App.state.accuracy);
+    updateWalls(me);
     const focus = s.focusId ? App.piece(s.focusId) : null;
     const pieces = App.visible();
     if (focus && !pieces.includes(focus)) pieces.unshift(focus); // the piece you opened shows even if filtered out
@@ -389,9 +472,9 @@ const ARView = (() => {
     g.addColorStop(0, Theme.css('--color-bg')); g.addColorStop(1, Theme.css('--color-sky'));
     c.fillStyle = g; c.fillRect(0, 0, W, Math.max(0, horizon));
     c.strokeStyle = Theme.alpha('--color-primary', 0.25); c.lineWidth = 1;
-    // ground lines ahead, seen from eye height 1.6 m
+    // ground lines ahead, seen from your eye height
     for (let d = 2; d < 200; d *= 1.35) {
-      const y = H / 2 + f * Math.tan(rad(s.pitch) + Math.atan(1.6 / d));
+      const y = H / 2 + f * Math.tan(rad(s.pitch) + Math.atan(eye() / d));
       if (y > H || y < 0) continue;
       c.beginPath(); c.moveTo(0, y); c.lineTo(W, y); c.stroke();
     }
@@ -452,6 +535,9 @@ const ARView = (() => {
       ? `LIVE · ${s.placements.length} NEAR · ${open} OPEN · TAP FOR GHOST`
       : `GHOST · PROJECTED AROUND YOU${s.canLive ? ' · TAP FOR LIVE' : ''}`;
     $('#hud-heading').textContent = `${DIRS[Math.round(s.heading / 45) % 8]} ${Math.round(s.heading)}° ${s.sensors ? (s.nudge ? `· ALIGNED ${s.nudge > 0 ? '+' : ''}${Math.round(s.nudge)}°` : '· DRAG TO ALIGN') : '· DRAG TO LOOK'}`;
+    const wl = { xray: 'X-RAY', hide: 'HIDE', off: 'OFF' }[walls.mode];
+    $('#hud-walls').textContent = `WALLS · ${wl}${walls.mode !== 'off' ? (walls.state ? ' · ' + walls.state : ` · ${walls.count}`) : ''}`;
+    $('#hud-eye').textContent = `EYE · ${walls.floor ? 'FLOOR ' + walls.floor : 'STREET'}`;
     $('#hud-gps').textContent = App.state.me ? `GPS ±${Math.round(App.state.accuracy)} m` : 'NO GPS';
   }
 

@@ -3,11 +3,13 @@
 
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 
 const rad = d => (d * Math.PI) / 180;
 
 export function createLayer(canvas) {
   const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+  renderer.autoClear = false;
   renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
 
@@ -83,11 +85,58 @@ export function createLayer(canvas) {
 
   function resize(W, H) { renderer.setSize(W, H, false); }
 
+  // ---------- walls: real buildings as invisible occluders ----------
+  // Buildings write depth but no color, so the camera image shows through and pieces behind them are cut away.
+  // X-ray: before that, every piece is drawn as a faint wireframe that ignores depth; where a wall hides the
+  // solid piece, the faint outline is what's left.
+  const walls = new THREE.Group();
+  walls.renderOrder = -1;
+  scene.add(walls);
+  const wallMat = new THREE.MeshBasicMaterial({ colorWrite: false });
+  const xrayMat = new THREE.MeshBasicMaterial({ color: 0x4a3aff, wireframe: true, transparent: true, opacity: 0.28, depthTest: false, depthWrite: false });
+  let wallMode = 'xray';   // 'xray' | 'hide' | 'off'
+
+  // footprints: [{ pts: [[east, north], ...] in meters around (0,0), h: meters }]
+  function setWalls(footprints) {
+    walls.children.forEach(m => m.geometry.dispose());
+    walls.clear();
+    const geos = [];
+    for (const b of footprints) {
+      if (b.pts.length < 3) continue;
+      const shape = new THREE.Shape(b.pts.map(([x, y]) => new THREE.Vector2(x, y)));
+      const g = new THREE.ExtrudeGeometry(shape, { depth: b.h, bevelEnabled: false });
+      g.rotateX(-Math.PI / 2);   // shape (east, north) -> (x, -z); extrusion -> up
+      g.deleteAttribute('uv'); g.deleteAttribute('normal');
+      geos.push(g);
+    }
+    if (!geos.length) return 0;
+    const merged = mergeGeometries(geos);
+    geos.forEach(g => g.dispose());
+    const mesh = new THREE.Mesh(merged, wallMat);
+    mesh.renderOrder = -1;   // depth first, so pieces behind are cut
+    walls.add(mesh);
+    return footprints.length;
+  }
+  // Where the walls' (0,0) sits relative to you, in meters.
+  function setWallsOffset(east, north) { walls.position.set(east, 0, -north); }
+  function setWallMode(m) { wallMode = m; }
+  function setEye(m) { camera.position.y = m; }
+
   function render() {
     const dt = clock.getDelta();
     items.forEach(it => it.group.visible && it.mixer.update(dt));
+    renderer.clear();
+    const useWalls = wallMode !== 'off' && walls.children.length > 0;
+    if (useWalls && wallMode === 'xray') {
+      walls.visible = false;
+      scene.overrideMaterial = xrayMat;
+      renderer.render(scene, camera);
+      scene.overrideMaterial = null;
+      renderer.clearDepth();
+    }
+    walls.visible = useWalls;
     renderer.render(scene, camera);
   }
 
-  return { add, has, place, hideAll, setView, project, resize, render };
+  return { add, has, place, hideAll, setView, project, resize, render, setWalls, setWallsOffset, setWallMode, setEye };
 }

@@ -79,6 +79,9 @@ opens only on site (inside the radius, or by scanning the anchor).
 Physically present = real placement + unlocking.
 **Steady view.** The gyroscope turns the view (smooth), the compass only corrects north slowly in the background,
 and small GPS wobbles are ignored, so pieces stay put like sculptures. If a piece sits beside its building, drag sideways to align the layer.
+**Walls.** Buildings from OpenStreetMap (footprint + height or floors) hide pieces behind them, invisibly; X-ray mode
+leaves a faint outline of what's hidden. HUD: `WALLS` cycles X-RAY / HIDE / OFF, `EYE` sets your floor so a view from a window clears the roofs.
+Only a rough ~200 m area is sent to the map server.
 A landmark piece (`seenFrom`, in meters) shows at its real place from farther away, like a giant ring over a building you can see from your window.
 
 ## Roadmap
